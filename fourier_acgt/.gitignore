@@ -1,0 +1,6 @@
+venv/
+tmp*/
+.idea/
+*.png
+*.fa
+*.csv
