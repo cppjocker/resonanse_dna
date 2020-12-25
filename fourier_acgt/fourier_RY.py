@@ -3,8 +3,6 @@ import numpy as np
 import pandas as pd
 import math
 from scipy import signal
-import seaborn as sns
-import matplotlib.pyplot as plt
 import random
 
 import ctypes
@@ -29,6 +27,8 @@ class AlgParams:
 
     chunk_start = 10
     chunk_end   = 10
+
+    bin_size = 30000
 
 
 class ChromFourier:
@@ -218,12 +218,42 @@ class ChromFourier:
 
         return sequence
 
-    #alg_mode:
-    #
-    #0 - periodogram
-    #1 - correlational func
-    #
-    #
+
+    def get_description(self):
+        desc = ''
+
+        params = self.alg_params
+
+        desc = desc + 'Input file: ' + os.path.basename(params.input_file) + '. '
+
+
+        if params.do_insert:
+            desc += 'Randomized. '
+
+        if params.do_randomize:
+            desc += 'Permutted. '
+
+        if params.alg_mode == 0:
+            desc += 'Fourier periodogram. '
+        elif params.alg_mode == 2:
+            desc += 'Fourier by correlational. '
+
+        if params.code_mode == 0:
+            desc += 'Purine code [0, 1]. '
+        elif params.code_mode == 1:
+            desc += 'Purine code [-1, 1]. '
+
+        desc += 'Bin size: {} kb. '.format( int( params.bin_size / 1000 ) )
+
+        if params.chunk_start == 0 or params.chunk_end == 0:
+            desc += 'Whole range. '
+        else:
+            desc += '{}-{} Mb range. '.format(int ( params.chunk_start / 1000000 ), int ( params.chunk_end / 1000000) )
+
+        desc = desc + 'Heatmap file: ' + os.path.basename(params.heatmap_file) + '. '
+
+
+        return desc
 
     def make_heatmap(self):
 
@@ -262,21 +292,23 @@ class ChromFourier:
         if self.alg_params.do_randomize:
             sequence = ''.join(random.sample(sequence, len(sequence)))
 
-        bin = 30000
+        bin = self.alg_params.bin_size
 
         bins = math.floor ( len(sequence) / bin)
         size2 = 2 ** math.ceil(math.log(bin) / math.log(2))
         size2_half = int(size2 / 2) + 1
 
         heatmap_mat = np.zeros( (size2_half, bins ) )
+        seq_idx = np.zeros(bins)
 
         for k in range(0, bins):
 
-            start_seq = k * 30000
-            end_seq = k * 30000 + 30000
+            start_seq = k * bin
+            end_seq = k * bin + bin
 
             seq = sequence[start_seq:end_seq]
 
+            seq_idx[k] = start_seq + i_s
 
             seq_np = np.zeros(len(seq), dtype = np.int32)
 
@@ -332,7 +364,24 @@ class ChromFourier:
 
         #np.savetxt(self.alg_params.chrom_start_file, np.array([i_s]) )
 
-        np.savetxt(self.alg_params.heatmap_file, heatmap_mat, delimiter=";")
+        f, pxx = signal.periodogram(x=seq_np, nfft=size2)
+
+        heatmap_pd = pd.DataFrame(
+            data=heatmap_mat,  # values
+            index = f,
+            columns = seq_idx)
+
+        desc = self.get_description()
+
+        with open(self.alg_params.heatmap_file, 'w') as fout:
+            fout.write(desc + '\n')
+            heatmap_pd.to_csv(fout, sep = ";", header = True, index = True)
+
+
+
+        #np.savetxt(self.alg_params.heatmap_file, heatmap_mat, delimiter=";")
+
+
 
 def dir_path(path):
     if os.path.isdir(path):
@@ -400,93 +449,3 @@ if __name__ == '__main__':
     algParams = config2params(config)
     fourierProc = ChromFourier(algParams)
     fourierProc.make_heatmap()
-
-    quit()
-
-
-    size2 = 2 ** math.ceil(math.log(30000) / math.log(2))
-    size2_half = int(size2 / 2) + 1
-
-
-    #"heatmap.csv"
-
-    heatmap_mat = np.loadtxt(heatmap_file, delimiter=";")
-    chr_offset  = np.loadtxt(chrom_start_file).tolist()
-
-    print("Loaded")
-
-    f_ranges = [(0.0, 0.002), (0.002, 0.004), (0.004, 0.007), (0.007, 0.01), (0.01, 0.02), (0.02, 0.03), (0.03, 0.04), (0.04, 0.05), (0.05, 0.1), (0.1, 0.2), (0.2, 0.3), (0.3, 0.4), (0.4, 0.5)  ]
-
-    percentile = 83
-    n_chr_ranges = 1
-    total_chr_chunks = heatmap_mat.shape[1]
-
-    visual_chunk = math.floor( total_chr_chunks / n_chr_ranges )
-
-    for j in range(0, n_chr_ranges + 1):
-        chr_start = j * visual_chunk
-        chr_end = j * visual_chunk + visual_chunk
-
-        if j == n_chr_ranges:
-            chr_end = total_chr_chunks
-
-        if chr_start >= total_chr_chunks:
-            break
-
-        for k in range(0, len(f_ranges ) ):
-            f_range = f_ranges[k]
-            f_start = f_range[0]
-            f_end = f_range[1]
-
-            start_q = int(f_start * size2)
-            start_q = max(1, start_q)
-            end_q = int(f_end * size2)
-
-            heatmap_mat_chunk = heatmap_mat[start_q:end_q, chr_start:chr_end]
-
-            #change matrix by percentile logic
-
-            for i_hmap in range(0, heatmap_mat_chunk.shape[0]):
-                perc_xx = np.percentile(heatmap_mat_chunk[i_hmap, :], percentile)
-                idxs_more_perc_xx = np.where(heatmap_mat_chunk[i_hmap, :] > perc_xx)[0]
-                heatmap_mat_chunk[i_hmap, idxs_more_perc_xx] = perc_xx
-                pass
-
-            print(heatmap_mat_chunk.shape)
-            print(heatmap_mat_chunk.dtype)
-
-            font_scale = 0.5
-
-#            if(heatmap_mat_chunk.shape[0] < 40):
-#                font_scale = 0.2
-
-            round_val = 1
-
-
-            tmp_indexes = list( range(start_q, end_q) )
-            indexes = [round(size2 / x, round_val ) for x in tmp_indexes]
-
-            tmp_indexes_chr = list( range(chr_start, chr_end) )
-            indexes_chr = [ round( (30000 * x + chr_offset ) / 1000000, 1) for x in tmp_indexes_chr]
-
-            print(indexes)
-
-            df = pd.DataFrame(data=heatmap_mat_chunk, index=indexes, columns=indexes_chr)
-
-
-            sns.set(font_scale=font_scale)
-            sns.heatmap(df, cbar_kws={'label': 'Amplitude in FFT'}, cmap = 'plasma')
-
-            #sns.color_palette("turbo", as_cmap=True)
-
-
-            plt.xlabel("chrom pos (Mb)")
-            plt.ylabel("period (bp)")
-
-            plt.title("Project - Hotmap1. Program fourier_RY.py version 1.0 (heatmap with 30 kbp bin) ." + chrom_name )
-
-            plt.savefig("heatmap.period_{}-{}.chr_{}.png".format(indexes[-1], indexes[1], j), dpi = 600 )
-
-            plt.close()
-
-    pass
