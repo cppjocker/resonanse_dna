@@ -98,10 +98,10 @@ if __name__ == '__main__':
             f_start = f_range[0]
             f_end = f_range[1]
 
-            columns_num = [round(float(x) / 1000000, 1 ) for x in heatmap_mat.columns]
 
             heatmap_mat_chunk = heatmap_mat.loc[(heatmap_mat.index > f_start) & (heatmap_mat.index <= f_end)].iloc[:, chr_start:chr_end ].copy()
 
+            columns_num = [round(float(x) / 1000000, 1 ) for x in heatmap_mat_chunk.columns]
 
             #change matrix by percentile logic
 
@@ -122,30 +122,44 @@ if __name__ == '__main__':
 
 
             indexes = [round(1 / x, round_val ) for x in heatmap_mat_chunk.index]
+
+            min_y = min( indexes)
+            max_y = max(indexes)
+
+            yticks = int( heatmap_mat_chunk.shape[0] / 5)
+
+
+            if (max_y - min_y) > 5:
+                round_val = 0
+
+            print(yticks, round_val)
+
+            if (round_val == 0):
+              indexes = [ int(x)  for x in indexes]
+
             heatmap_mat_chunk.index = indexes
             heatmap_mat_chunk.columns = columns_num
 
 
             sns.set(font_scale=font_scale)
             if axs.ndim == 2:
-                sns_plt = sns.heatmap(heatmap_mat_chunk, cbar_kws={'label': 'Energy'}, cmap = 'plasma', ax = axs[k, j])
+                sns_plt = sns.heatmap(heatmap_mat_chunk, cbar_kws={'label': 'Energy'}, cmap = 'plasma', yticklabels=yticks, ax = axs[k, j])
             else:
-                sns_plt = sns.heatmap(heatmap_mat_chunk, cbar_kws={'label': 'Energy'}, cmap = 'plasma', ax = axs[k])
+                sns_plt = sns.heatmap(heatmap_mat_chunk, cbar_kws={'label': 'Energy'}, cmap = 'plasma', yticklabels=yticks, ax = axs[k])
 
             #sns.color_palette("turbo", as_cmap=True)
+
+            #sns_plt.set_yticks(  np.linspace(min_y, max_y,  5 ) )
+
 
             sns_plt.set_xticklabels( sns_plt.get_xmajorticklabels(), fontsize = 3 )
             sns_plt.set_yticklabels( sns_plt.get_ymajorticklabels(), fontsize = 3)
 
-            min_y = min( heatmap_mat_chunk.index)
-            max_y = max(heatmap_mat_chunk.index)
-
-            #sns_plt.set_yticks( np.arange(min_y, max_y, ( max_y - min_y )  / 5 ) )
 
             sns_plt.set_xlabel("chrom pos (Mb)", fontsize=3)
             sns_plt.set_ylabel("period (bp)", verticalalignment='center', fontsize=3)
 
 
-    plt.savefig(png_file, dpi = 600 )
+    plt.savefig(png_file, dpi = 1200 )
 
     plt.close()
