@@ -68,6 +68,8 @@ if __name__ == '__main__':
     png_file = os.path.join(config['DEFAULT']['output_dir'],  config['DEFAULT']['png_file'])
 
     percentile = config['VISUAL'].getint('percentile')
+    percentile_mode = config['VISUAL'].getint('percentile_mode')
+
     n_chr_ranges = config['VISUAL'].getint('chr_chunks')
 
     heatmap_mat = pd.read_csv(heatmap_file, sep=";", skiprows=1, index_col=0, header=0)
@@ -83,7 +85,7 @@ if __name__ == '__main__':
 
     visual_chunk = math.floor( total_chr_chunks / n_chr_ranges )
 
-    fig, axs = plt.subplots( len(f_ranges), n_chr_ranges, sharex='col', sharey='row')
+    fig, axs = plt.subplots( len(f_ranges), n_chr_ranges, sharex='col')
 
     plt.suptitle(description + 'Percentile : {}.'.format(percentile), fontsize = 7)
    # plt.tick_params(labelcolor='none', top=False, bottom=False, left=False, right=False)
@@ -99,14 +101,27 @@ if __name__ == '__main__':
             f_end = f_range[1]
 
 
-            heatmap_mat_chunk = heatmap_mat.loc[(heatmap_mat.index > f_start) & (heatmap_mat.index <= f_end)].iloc[:, chr_start:chr_end ].copy()
+            heatmap_mat_chunk_period = heatmap_mat.loc[(heatmap_mat.index > f_start) & (heatmap_mat.index <= f_end)].copy()
+
+            heatmap_mat_chunk = heatmap_mat_chunk_period.iloc[:, chr_start:chr_end].copy()
 
             columns_num = [round(float(x) / 1000000, 1 ) for x in heatmap_mat_chunk.columns]
 
             #change matrix by percentile logic
+            percentile_period = np.percentile(heatmap_mat_chunk_period, percentile)
+            heatmap_mat_chunk_period_1d = heatmap_mat_chunk_period.values.flatten()
+
+            percentile_period2 = np.percentile(heatmap_mat_chunk_period_1d, percentile)
+
+            print(percentile_period)
+            print(percentile_period2)
 
             for i_hmap in range(0, heatmap_mat_chunk.shape[0]):
-                perc_xx = np.percentile(heatmap_mat_chunk.iloc[i_hmap, :], percentile)
+                if percentile_mode == 0:
+                    perc_xx = percentile_period
+                else:
+                    perc_xx = np.percentile(heatmap_mat_chunk.iloc[i_hmap, :], percentile)
+
                 idxs_more_perc_xx = np.where(heatmap_mat_chunk.iloc[i_hmap, :] > perc_xx)[0]
                 heatmap_mat_chunk.iloc[i_hmap, idxs_more_perc_xx] = perc_xx
                 pass
