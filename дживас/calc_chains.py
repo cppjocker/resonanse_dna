@@ -30,6 +30,12 @@ def determineColumns(df_snp):
         columns.pos = 'base_pair_location'
         columns.other = 'other_allele'
         columns.effect = 'effect_allele'
+    elif 'CHR' in df_snp.columns:
+        columns.id = 'MarkerName'
+        columns.chrom = 'CHR'
+        columns.pos = 'POS'
+        columns.other = 'A2'
+        columns.effect = 'A1'
     else:
         pass
 
@@ -166,8 +172,8 @@ if __name__ == '__main__':
 
             nucl = sequence[pos - 1]
 
-    #        if len(allele_1) > 1 or len(allele_2) > 1:
-    #            continue
+            if len(allele_1) > 1 or len(allele_2) > 1:
+                continue
 
             if len(allele_1) > 1:
                 print(allele_1)
