@@ -22,10 +22,10 @@ if __name__ == '__main__':
     parser.add_argument("-conf", "--config", help="config ini file", type=argparse.FileType('r'), required=False)
 
     parser.add_argument("-in", "--input",
-                        help="heatmap file", type=argparse.FileType('r'))
+                        help="heatmap file")
 
     parser.add_argument("-out", "--output",
-                        help="png file", type=argparse.FileType('w'))
+                        help="png file")
 
     parser.add_argument("-indir", "--input_dir",
                         help="input directory of fasta file", type = dir_path)
@@ -46,7 +46,8 @@ if __name__ == '__main__':
         config['DEFAULT']['heatmap_file'] = args.input
 
     if args.output is not None:
-        config['DEFAULT']['png_file'] = args.out
+        print(args.output)
+        config['DEFAULT']['png_file'] = args.output
 
     if args.input_dir is not None:
         config['DEFAULT']['input_dir'] = args.input_dir
@@ -72,10 +73,12 @@ if __name__ == '__main__':
 
     n_chr_ranges = config['VISUAL'].getint('chr_chunks')
 
-    heatmap_mat = pd.read_csv(heatmap_file, sep=";", skiprows=1, index_col=0, header=0)
+    heatmap_mat = pd.read_csv(heatmap_file, sep=";", skiprows=2, index_col=0, header=0)
 
+    description = ''
     with open(heatmap_file, 'r') as fin:
-        description = fin.readline()
+        description += fin.readline() + '\n'
+        description += fin.readline()
 
     print("Loaded")
 

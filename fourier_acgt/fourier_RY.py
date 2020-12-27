@@ -224,7 +224,7 @@ class ChromFourier:
 
         params = self.alg_params
 
-        desc = desc + 'Input file: ' + os.path.basename(params.input_file) + '. '
+        desc = desc + 'Input file path: ' + params.input_file + '. \n'
 
 
         if params.do_insert:
@@ -410,10 +410,10 @@ if __name__ == '__main__':
     config = configparser.ConfigParser()
 
     parser = ArgumentParser()
-    parser.add_argument("-conf", "--config", help="config ini file", type=argparse.FileType('r'), required=False)
+    parser.add_argument("-conf", "--config", help="config ini file", required=False)
 
     parser.add_argument("-in", "--input",
-                        help="chrom Fasta file", type=argparse.FileType('r'))
+                        help="chrom Fasta file")
 
     parser.add_argument("-out", "--output",
                         help="heatmap file", type=argparse.FileType('w'))
