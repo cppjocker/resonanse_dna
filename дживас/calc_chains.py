@@ -129,6 +129,9 @@ if __name__ == '__main__':
     df_snp['y1_len'] = 0
     df_snp['y2_len'] = 0
 
+    df_snp['m1'] = 0
+    df_snp['m2'] = 0
+
     df_write = pd.DataFrame(columns = df_snp.columns)
 
     all_chr = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11',
@@ -181,8 +184,7 @@ if __name__ == '__main__':
             if allele_1 !=  nucl:
                 pass
 
-            assert(allele_1 ==  nucl )
-            assert(allele_2 !=  nucl )
+            assert(allele_1 ==  nucl or allele_2 ==  nucl)
 
             R1, Y1 = calc_RY(sequence, pos - 1, allele_1)
             R2, Y2 = calc_RY(sequence, pos - 1, allele_2)
@@ -190,8 +192,12 @@ if __name__ == '__main__':
             df_part_write.at[index, 'r1_len'] = R1
             df_part_write.at[index, 'y1_len'] = Y1
 
+            df_part_write.at[index, 'm1'] = max(R1, Y1)
+
             df_part_write.at[index, 'r2_len'] = R2
             df_part_write.at[index, 'y2_len'] = Y2
+
+            df_part_write.at[index, 'm2'] = max(R2, Y2)
 
         #df_write = df_part_write[[columns.id, columns.chrom, columns.pos, columns.other, columns.effect, 'r1_len', 'y1_len', 'r2_len', 'y2_len']]
 
