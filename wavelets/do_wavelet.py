@@ -114,9 +114,7 @@ class ChromWavelet:
         return sequence
 
 
-    def make_wavelet(self):
-        print(self.alg_params.png_file)
-
+    def test_wavelet(self):
         t = np.arange(1, 1000)
         sig1 = np.sin(2 * math.pi * 1 / 150 * t)
         sig2 = np.sin(2 * math.pi * 1 / 300 * t)
@@ -133,7 +131,7 @@ class ChromWavelet:
 
         plt.close()
 
-        scales = np.arange(100, 500)
+        scales = np.arange(1, 150)
 
         waveletname = 'morl'
         dt = 1
@@ -150,12 +148,12 @@ class ChromWavelet:
         heatmap_pd = pd.DataFrame(
             data=power,  # values
             index=period,
-            columns=range(0, len(sig ) ) )
+            columns=range(0, len(sig)))
 
-        cs = plt.contourf( range(0, len(sig ) ) , period,  power)
-        #sns.set(font_scale=0.5)
+        cs = plt.contourf(range(0, len(sig)), period, power)
+        # sns.set(font_scale=0.5)
 
-        #sns.heatmap(heatmap_pd, cbar_kws={'label': 'Energy'}, cmap='plasma')
+        # sns.heatmap(heatmap_pd, cbar_kws={'label': 'Energy'}, cmap='plasma')
 
         plt.xlabel("Time", fontsize=7)
         plt.ylabel("period (bp)", fontsize=7)
@@ -172,6 +170,10 @@ class ChromWavelet:
         plt.close()
 
         quit()
+
+    def make_wavelet(self):
+        print(self.alg_params.png_file)
+
 
         fasta_seqs = SeqIO.parse(open(self.alg_params.input_file), 'fasta')
 
@@ -243,12 +245,14 @@ class ChromWavelet:
 
         seq_np_cur = seq_np.copy()
 
+        print(len(idx_gaps) )
+
         seq_np_cur[idx_gaps] = np.random.binomial(n=1, p=0.5, size=len(idx_gaps))
 
         if self.alg_params.code_mode == 1:
             seq_np_cur[idx_gaps] = (seq_np_cur[idx_gaps] * 2) - 1
 
-        scales = np.arange(100, 200)
+        scales = np.arange(1, 150)
         waveletname = 'morl'
         dt = 1
 
@@ -262,7 +266,14 @@ class ChromWavelet:
 
         power = (abs(coefficients)) ** 2
         period = [ round( 1 / x) for x in frequencies ]
-        chrom_poses = [ round(x / 1000000, 1) for x in range(i_s, i_e) ]
+
+        if(i_e - i_s > 100000):
+            chrom_poses = [ round(x / 1000000, 1) for x in range(i_s, i_e) ]
+            chrom_label = "chrom pos (Mb)"
+        else:
+            chrom_poses = [ int(x)  for x in range(i_s, i_e) ]
+            chrom_label = "chrom pos (bp)"
+
 
         heatmap_pd = pd.DataFrame(
             data=power,  # values
@@ -273,7 +284,9 @@ class ChromWavelet:
 
         sns.heatmap(heatmap_pd, cbar_kws={'label': 'Energy'}, cmap = 'plasma' )
 
-        plt.xlabel("chrom pos (Mb)", fontsize = 7)
+        plt.xticks(fontsize=3)
+
+        plt.xlabel(chrom_label, fontsize = 7)
         plt.ylabel("period (bp)", fontsize = 7)
 
 
@@ -319,13 +332,16 @@ if __name__ == '__main__':
                         help="chrom Fasta file")
 
     parser.add_argument("-out", "--output",
-                        help="heatmap file", type=argparse.FileType('w'))
+                        help="heatmap file")
 
     parser.add_argument("-indir", "--input_dir",
                         help="input directory of fasta file", type = dir_path)
 
     parser.add_argument("-outdir", "--output_dir",
                         help="input directory of fasta file")
+
+    parser.add_argument("-ch_s", "--chunk_start", help = "start wavelet analyzing")
+    parser.add_argument("-ch_у", "--chunk_end", help = "end wavelet analyzing")
 
     args = parser.parse_args()
 
@@ -338,13 +354,20 @@ if __name__ == '__main__':
         config['DEFAULT']['input_file'] = args.input
 
     if args.output is not None:
-        config['DEFAULT']['png_file'] = args.out
+        config['DEFAULT']['png_file'] = args.output
 
     if args.input_dir is not None:
         config['DEFAULT']['input_dir'] = args.input_dir
 
     if args.output_dir is not None:
         config['DEFAULT']['output_dir'] = args.output_dir
+
+    if args.chunk_start is not None:
+        config['ALG']['chunk_start'] = args.chunk_start
+
+    if args.chunk_end is not None:
+        config['ALG']['chunk_end'] = args.chunk_end
+
 
     if not os.path.exists(config['DEFAULT']['output_dir'] ) :
         os.mkdir(config['DEFAULT']['output_dir'])
