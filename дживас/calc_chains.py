@@ -220,14 +220,21 @@ if __name__ == '__main__':
     snp_table_file = config['DEFAULT']['input_file']
     output = config['DEFAULT']['output_file']
 
-    df_snp = pd.read_csv(snp_table_file, sep = '\t', header=0)
+    pd_header = pd.read_csv(snp_table_file, sep = '\t', header=0, nrows=3)
+    determineColumns(pd_header)
 
-    determineColumns(df_snp)
+    df_snp = pd.read_csv(snp_table_file, sep = '\t', header=0, dtype = {columns.chrom: str} )
+
+
+    df_snp = df_snp.dropna( subset=[columns.pos] )
 
     if ( df_snp[columns.chrom].dtype == np.int64 ) or (df_snp[columns.chrom].dtype == np.int32 ):
         df_snp[columns.chrom].dtype
 
+
     df_snp = df_snp.astype({columns.chrom: str, columns.pos : int} )
+
+    print(set( df_snp[columns.chrom]) )
 
     df_snp['r1_len'] = 0
     df_snp['r2_len'] = 0
@@ -241,6 +248,8 @@ if __name__ == '__main__':
     df_snp['p1'] = 0
     df_snp['p2'] = 0
 
+    df_snp['remove'] = False
+
 #    df_snp['seq1'] = ''
 #    df_snp['seq2'] = ''
 
@@ -252,9 +261,14 @@ if __name__ == '__main__':
     all_chr = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11',
                '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', 'X', 'Y']
 
-    #all_chr = ['18']
+    all_chr = ['18']
+
+    total_miss = 0
+    total_num = 0
 
     for cur_chr in all_chr:
+
+        print(cur_chr)
 
         df_part = df_snp.loc[df_snp[columns.chrom] == cur_chr].copy()
 
@@ -293,6 +307,7 @@ if __name__ == '__main__':
             nucl = sequence[pos - 1]
 
             if len(allele_1) > 1 or len(allele_2) > 1:
+                df_part_write.at[index, 'remove'] = True
                 continue
 
             if len(allele_1) > 1:
@@ -300,6 +315,11 @@ if __name__ == '__main__':
 
             if allele_1 !=  nucl:
                 pass
+
+            if not (allele_1 ==  nucl or allele_2 ==  nucl):
+                print(total_miss)
+                total_miss = total_miss + 1
+#                continue
 
             assert(allele_1 ==  nucl or allele_2 ==  nucl)
 
@@ -324,15 +344,30 @@ if __name__ == '__main__':
             df_part_write.at[index, 'p1'] = km1
             df_part_write.at[index, 'p2'] = km2
 
-    #        df_part_write.at[index, 'seq1'] = seq1
-    #        df_part_write.at[index, 'seq2'] = seq2
+            total_num = total_num + 1
 
-    #        df_part_write.at[index, 'seq1_h'] = seq1_h
-    #        df_part_write.at[index, 'seq2_h'] = seq2_h
+#            if total_num >= 200:
+#                break
+
+#            df_part_write.at[index, 'seq1'] = seq1
+#            df_part_write.at[index, 'seq2'] = seq2
+
+#            df_part_write.at[index, 'seq1_h'] = seq1_h
+#            df_part_write.at[index, 'seq2_h'] = seq2_h
 
 
         #df_write = df_part_write[[columns.id, columns.chrom, columns.pos, columns.other, columns.effect, 'r1_len', 'y1_len', 'r2_len', 'y2_len']]
 
         df_write = pd.concat([df_write, df_part_write])
+
+#        if total_num >= 200:
+#            df_write = df_write.iloc[0:200]
+#            break
+
+    print( df_write.shape[0])
+    df_write = df_write.drop( df_write[df_write.remove ].index  )
+    print( df_write.shape[0])
+
+    df_write = df_write.drop(columns='remove')
 
     df_write.to_csv(output, sep = '\t', index = False)
