@@ -4,6 +4,10 @@ import configparser
 import os
 from Bio import SeqIO
 
+import datetime
+import gc
+
+from argparse import ArgumentParser
 
 
 snp_table_file = ''
@@ -36,6 +40,11 @@ def determineColumns(df_snp):
         columns.pos = 'POS'
         columns.other = 'A2'
         columns.effect = 'A1'
+
+        if ('REF' in df_snp.columns) and ('ALT' in df_snp.columns):
+            columns.other = 'REF'
+            columns.effect = 'ALT'
+
     else:
         pass
 
@@ -212,9 +221,20 @@ def calc_RY(seq, pos, nucl):
     return R_chain_len, Y_chain_len
 
 if __name__ == '__main__':
+    print(datetime.datetime.now())
+
     config = configparser.ConfigParser()
 
-    config.read('config.ini')
+    parser = ArgumentParser()
+    parser.add_argument("-conf", "--config", help="config ini file",  required=False)
+
+    args = parser.parse_args()
+
+    if args.config is not None:
+        config.read(args.config)
+        print(args.config)
+    else:
+        config.read('config_gen.ini')
 
     chrom_dir = config['DEFAULT']['chrom_dir']
     snp_table_file = config['DEFAULT']['input_file']
@@ -223,32 +243,7 @@ if __name__ == '__main__':
     pd_header = pd.read_csv(snp_table_file, sep = '\t', header=0, nrows=3)
     determineColumns(pd_header)
 
-    df_snp = pd.read_csv(snp_table_file, sep = '\t', header=0, dtype = {columns.chrom: str} )
 
-
-    df_snp = df_snp.dropna( subset=[columns.pos] )
-
-    if ( df_snp[columns.chrom].dtype == np.int64 ) or (df_snp[columns.chrom].dtype == np.int32 ):
-        df_snp[columns.chrom].dtype
-
-
-    df_snp = df_snp.astype({columns.chrom: str, columns.pos : int} )
-
-    print(set( df_snp[columns.chrom]) )
-
-    df_snp['r1_len'] = 0
-    df_snp['r2_len'] = 0
-
-    df_snp['y1_len'] = 0
-    df_snp['y2_len'] = 0
-
-    df_snp['m1'] = 0
-    df_snp['m2'] = 0
-
-    df_snp['p1'] = 0
-    df_snp['p2'] = 0
-
-    df_snp['remove'] = False
 
 #    df_snp['seq1'] = ''
 #    df_snp['seq2'] = ''
@@ -256,21 +251,44 @@ if __name__ == '__main__':
 #    df_snp['seq1_h'] = ''
 #    df_snp['seq2_h'] = ''
 
-    df_write = pd.DataFrame(columns = df_snp.columns)
 
     all_chr = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11',
                '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', 'X', 'Y']
 
-    all_chr = ['18']
+#    all_chr = ['18']
 
     total_miss = 0
     total_num = 0
+    total_chr = 0
 
     for cur_chr in all_chr:
 
         print(cur_chr)
 
-        df_part = df_snp.loc[df_snp[columns.chrom] == cur_chr].copy()
+        df_iter = pd.read_csv(snp_table_file, sep = '\t', iterator=True, chunksize=4000, header=0, dtype = {columns.chrom: str} )
+
+        df_part = pd.DataFrame(columns=pd_header.columns)
+
+        for df_chunk in df_iter:
+            df_chunk = df_chunk.dropna(subset=[columns.pos])
+
+            df_chunk = df_chunk.astype({columns.chrom: str, columns.pos: int})
+
+            df_part = df_part.append( df_chunk[df_chunk[columns.chrom] == cur_chr]  )
+
+        df_part['r1_len'] = 0
+        df_part['r2_len'] = 0
+
+        df_part['y1_len'] = 0
+        df_part['y2_len'] = 0
+
+        df_part['m1'] = 0
+        df_part['m2'] = 0
+
+        df_part['p1'] = 0
+        df_part['p2'] = 0
+
+        df_part['remove'] = False
 
         chr_filename = 'chr' + cur_chr + '.fa'
 
@@ -296,7 +314,7 @@ if __name__ == '__main__':
 
 #        quit()
 
-        df_part_write = df_part.copy()
+        df_write = []
 
         for index, row in df_part.iterrows():
             allele_1 = row[columns.other]
@@ -307,7 +325,7 @@ if __name__ == '__main__':
             nucl = sequence[pos - 1]
 
             if len(allele_1) > 1 or len(allele_2) > 1:
-                df_part_write.at[index, 'remove'] = True
+                df_part.at[index, 'remove'] = True
                 continue
 
             if len(allele_1) > 1:
@@ -329,45 +347,50 @@ if __name__ == '__main__':
             km1, seq1, seq1_h = calc_hydro(sequence, pos - 1, allele_1)
             km2, seq2, seq2_h = calc_hydro(sequence, pos - 1, allele_2)
 
+            df_part.at[index, 'r1_len'] = R1
+            df_part.at[index, 'y1_len'] = Y1
 
+            df_part.at[index, 'm1'] = max(R1, Y1)
 
-            df_part_write.at[index, 'r1_len'] = R1
-            df_part_write.at[index, 'y1_len'] = Y1
+            df_part.at[index, 'r2_len'] = R2
+            df_part.at[index, 'y2_len'] = Y2
 
-            df_part_write.at[index, 'm1'] = max(R1, Y1)
+            df_part.at[index, 'm2'] = max(R2, Y2)
 
-            df_part_write.at[index, 'r2_len'] = R2
-            df_part_write.at[index, 'y2_len'] = Y2
-
-            df_part_write.at[index, 'm2'] = max(R2, Y2)
-
-            df_part_write.at[index, 'p1'] = km1
-            df_part_write.at[index, 'p2'] = km2
+            df_part.at[index, 'p1'] = km1
+            df_part.at[index, 'p2'] = km2
 
             total_num = total_num + 1
 
 #            if total_num >= 200:
 #                break
 
-#            df_part_write.at[index, 'seq1'] = seq1
-#            df_part_write.at[index, 'seq2'] = seq2
+#            df_part.at[index, 'seq1'] = seq1
+#            df_part.at[index, 'seq2'] = seq2
 
-#            df_part_write.at[index, 'seq1_h'] = seq1_h
-#            df_part_write.at[index, 'seq2_h'] = seq2_h
+#            df_part.at[index, 'seq1_h'] = seq1_h
+#            df_part.at[index, 'seq2_h'] = seq2_h
 
 
-        #df_write = df_part_write[[columns.id, columns.chrom, columns.pos, columns.other, columns.effect, 'r1_len', 'y1_len', 'r2_len', 'y2_len']]
+        #        if total_num >= 200:
+        #            df_part = df_part.iloc[0:200]
+        #            break
 
-        df_write = pd.concat([df_write, df_part_write])
+        print(df_part.shape[0])
+        df_part = df_part.drop(df_part[df_part.remove].index)
+        print(df_part.shape[0])
 
-#        if total_num >= 200:
-#            df_write = df_write.iloc[0:200]
-#            break
+        df_part = df_part.drop(columns='remove')
 
-    print( df_write.shape[0])
-    df_write = df_write.drop( df_write[df_write.remove ].index  )
-    print( df_write.shape[0])
+        if total_chr == 0:
+            df_part.to_csv(output, sep='\t', index=False)
+        else:
+            df_part.to_csv(output, sep='\t', index=False, header=False, mode = 'a')
 
-    df_write = df_write.drop(columns='remove')
+        total_chr = total_chr + 1
 
-    df_write.to_csv(output, sep = '\t', index = False)
+        gc.collect()
+
+    print(datetime.datetime.now())
+
+
