@@ -29,6 +29,14 @@ class ColumnsSnp:
 
 columns = ColumnsSnp()
 
+def reset_df_data():
+    global pairs_p
+    global pairs_h
+
+    pairs_p = pd.DataFrame({'x': pd.Series([], dtype=int), 'y': pd.Series([], dtype=int)})
+    pairs_h = pd.DataFrame({'x': pd.Series([], dtype=int), 'y': pd.Series([], dtype=int)})
+
+
 def determineColumns(df_snp):
     if 'hm_chrom' in df_snp.columns:
         columns.id = 'hm_rsid'
@@ -225,7 +233,7 @@ def check_seq(seq, a_range, b_range, pairs):
 
     if (seq_a == seq_b):
         pairs = set_matrix_value(a_range, b_range, pairs)
-    elif( alg_params.reverse_mode and seq_a == np.flip(seq_b) ):
+    elif( alg_params.reverse_mode and seq_a == seq_b[::-1] ):
         pairs = set_matrix_value_reverse(a_range, b_range, pairs)
 
 
@@ -238,9 +246,9 @@ def check_seq(seq, a_range, b_range, pairs):
 
 
 def test():
-    tips = sns.load_dataset("tips")
-    sns.scatterplot(data=tips, x="total_bill", y="tip")
-
+    data_url = 'http://bit.ly/2cLzoxH'
+    gapminder = pd.read_csv(data_url)
+    print( np.unique( gapminder['continent'] ))
 
 if __name__ == '__main__':
     #test()
@@ -290,8 +298,7 @@ if __name__ == '__main__':
 
         common_start = 30000000
         for k in range(0, num_pages ):
-            pairs_p = pairs_p.iloc[0:0]
-            pairs_h = pairs_h.iloc[0:0]
+            reset_df_data()
 
             sequence = sequence.upper()
             start_cur = common_start + k * 2000
@@ -325,38 +332,39 @@ if __name__ == '__main__':
                         pairs_h = check_seq(chunk_sequence, hydro_list[cur_group], hydro_list[i], pairs_h)
 
 
+            pairs_common = pd.merge(pairs_p, pairs_h, how="inner", on=["x", "y"])
+
+            pairs_p['type'] = 'Purine'
+            pairs_h['type'] = 'Hydrocode'
+            pairs_common['type'] = 'Common'
+
+            pairs_all = pd.concat([pairs_p, pairs_h, pairs_common])
+
+            palette = []
+
+            if pairs_p.shape[0] > 0:
+                palette.append('blue')
+
+            if pairs_h.shape[0] > 0:
+                palette.append('red')
+
+            if pairs_common.shape[0] > 0:
+                palette.append('black')
+
             fig = plt.figure()
             ax = fig.add_subplot(111)  # The big subplot
-            ax1 = fig.add_subplot(211, aspect='equal')
-            ax2 = fig.add_subplot(212, aspect='equal')
+            ax.set_aspect('equal', adjustable='box')
 
-            ax.spines['top'].set_color('none')
-            ax.spines['bottom'].set_color('none')
-            ax.spines['left'].set_color('none')
-            ax.spines['right'].set_color('none')
-            ax.tick_params(labelcolor='w', top=False, bottom=False, left=False, right=False)
-
-            sns.scatterplot(data=pairs_p, x="x", y="y",  ax=ax1, s=1, label='purine')
-
-            ax1.set_xlabel("")
-            ax1.set_ylabel("")
-            ax1.set_xlim(0, len(chunk_sequence))
-            ax1.set_ylim(0, len(chunk_sequence))
-            #ax1.set_title("purine code", fontweight='bold')
+            sns.scatterplot(data=pairs_all, x="x", y="y", hue="type",  ax=ax, s=0.15,  palette=palette, legend='full')
 
 
-            sns.scatterplot(data=pairs_h, x="x", y="y",  ax=ax2, s=1, label='hydrocode')
-            ax2.set_xlabel("")
-            ax2.set_ylabel("")
-            ax2.set_xlim(0, len(chunk_sequence))
-            ax2.set_ylim(0, len(chunk_sequence))
-            #ax2.set_title("hydrocode", fontweight='bold')
-
-            ax1.legend(loc='upper left', bbox_to_anchor=(1.04, 1))
-            ax2.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+            ax.set_xlim(0, len(chunk_sequence))
+            ax.set_ylim(0, len(chunk_sequence))
 
             ax.set_xlabel("x", fontweight='bold')
             ax.set_ylabel("y", fontweight='bold')
+
+            ax.legend(loc='upper left', bbox_to_anchor=(1.04, 1), fontsize = 5)
 
             description = 'Input File: ' + full_filename + '\n'
             description += 'Start MB: {0} '.format(start_cur / 1000000) + '\n'
@@ -369,13 +377,13 @@ if __name__ == '__main__':
                 description += 'Flexible Endings: True \n'
 
 
-            ax.set_title(description, fontweight='bold')
+            ax.set_title(description, fontweight='bold', fontsize=4)
 
 
             fig.tight_layout()
 
             output_png = '{}_{}.png'.format(output, k)
-            plt.savefig(output_png, dpi=1200, bbox_inches='tight')
+            plt.savefig(output_png, dpi=2400, bbox_inches='tight')
             plt.clf()
             plt.close()
 
