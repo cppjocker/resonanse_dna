@@ -183,7 +183,7 @@ def find_hydro_chains(hydro_seq):
     while (i < len(hydro_seq) - 1 ):
         if hydro_seq[i] not in ['K', 'M']:
             if start >= 0:
-                if (i - start >= 3): # min length
+                if (i - start >= 1): # min length
                     if alg_params.flexible_endings:
                         res.append( RangNucl(start , i ) )
                     else:
@@ -294,15 +294,15 @@ if __name__ == '__main__':
             name, sequence = fasta.id, str(fasta.seq)
             break
 
-        num_pages = 50
+        num_pages = 1
 
         common_start = 30000000
         for k in range(0, num_pages ):
             reset_df_data()
 
             sequence = sequence.upper()
-            start_cur = common_start + k * 2000
-            end_cur =   common_start + k * 2000 + 2000
+            start_cur = common_start + k * 5000
+            end_cur =   common_start + k * 5000 + 5000
             chunk_sequence = sequence[start_cur:end_cur]
 
             print(start_cur, end_cur)
@@ -343,10 +343,10 @@ if __name__ == '__main__':
             palette = []
 
             if pairs_p.shape[0] > 0:
-                palette.append('blue')
+                palette.append('red')
 
             if pairs_h.shape[0] > 0:
-                palette.append('red')
+                palette.append('blue')
 
             if pairs_common.shape[0] > 0:
                 palette.append('black')
@@ -355,16 +355,21 @@ if __name__ == '__main__':
             ax = fig.add_subplot(111)  # The big subplot
             ax.set_aspect('equal', adjustable='box')
 
-            sns.scatterplot(data=pairs_all, x="x", y="y", hue="type",  ax=ax, s=0.15,  palette=palette, legend='full')
-
+            sns.scatterplot(data=pairs_all, x="x", y="y", hue="type",  ax=ax, s=0.15,  palette=palette)
+            plt.legend([], [], frameon=False)
 
             ax.set_xlim(0, len(chunk_sequence))
             ax.set_ylim(0, len(chunk_sequence))
 
-            ax.set_xlabel("x", fontweight='bold')
-            ax.set_ylabel("y", fontweight='bold')
+            #ax.set_xticklabels(ax.get_xticklabels(), fontsize = 4)
+            #ax.set_yticklabels(ax.get_yticklabels(), fontsize = 4)
 
-            ax.legend(loc='upper left', bbox_to_anchor=(1.04, 1), fontsize = 5)
+            plt.xticks(np.arange(0, len(chunk_sequence)+1, round( len(chunk_sequence) / 20) ), fontsize=2 )
+            plt.yticks(np.arange(0, len(chunk_sequence)+1, round( len(chunk_sequence) / 20) ), fontsize=2)
+
+            ax.set_xlabel("")
+            ax.set_ylabel("")
+
 
             description = 'Input File: ' + full_filename + '\n'
             description += 'Start MB: {0} '.format(start_cur / 1000000) + '\n'
