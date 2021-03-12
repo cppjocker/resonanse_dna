@@ -14,55 +14,34 @@ from argparse import ArgumentParser
 class AlgParams:
     reverse_mode = False
     flexible_endings = False
+    purine_orig_len = 3
+    hydro_orig_len = 1
+    purine_len = 1
+    hydro_len = 1
 
 alg_params = AlgParams()
 
 pairs_p = pd.DataFrame( {'x' : pd.Series( [], dtype=int), 'y' : pd.Series( [], dtype=int)})
 pairs_h = pd.DataFrame( {'x' : pd.Series( [], dtype=int), 'y' : pd.Series( [], dtype=int)})
 
-class ColumnsSnp:
-    id = ''
-    chrom = ''
-    pos = ''
-    other = ''
-    effect = ''
+pairs_p2 = pd.DataFrame( {'x' : pd.Series( [], dtype=int), 'y' : pd.Series( [], dtype=int)})
+pairs_h2 = pd.DataFrame( {'x' : pd.Series( [], dtype=int), 'y' : pd.Series( [], dtype=int)})
 
-columns = ColumnsSnp()
+
+
 
 def reset_df_data():
     global pairs_p
     global pairs_h
+    global pairs_p2
+    global pairs_h2
 
     pairs_p = pd.DataFrame({'x': pd.Series([], dtype=int), 'y': pd.Series([], dtype=int)})
     pairs_h = pd.DataFrame({'x': pd.Series([], dtype=int), 'y': pd.Series([], dtype=int)})
+    pairs_p2 = pd.DataFrame({'x': pd.Series([], dtype=int), 'y': pd.Series([], dtype=int)})
+    pairs_h2 = pd.DataFrame({'x': pd.Series([], dtype=int), 'y': pd.Series([], dtype=int)})
 
 
-def determineColumns(df_snp):
-    if 'hm_chrom' in df_snp.columns:
-        columns.id = 'hm_rsid'
-        columns.chrom = 'hm_chrom'
-        columns.pos = 'hm_pos'
-        columns.other = 'hm_other_allele'
-        columns.effect = 'hm_effect_allele'
-    elif 'chromosome' in df_snp.columns:
-        columns.id = 'variant_id'
-        columns.chrom = 'chromosome'
-        columns.pos = 'base_pair_location'
-        columns.other = 'other_allele'
-        columns.effect = 'effect_allele'
-    elif 'CHR' in df_snp.columns:
-        columns.id = 'MarkerName'
-        columns.chrom = 'CHR'
-        columns.pos = 'POS'
-        columns.other = 'A2'
-        columns.effect = 'A1'
-
-        if ('REF' in df_snp.columns) and ('ALT' in df_snp.columns):
-            columns.other = 'REF'
-            columns.effect = 'ALT'
-
-    else:
-        pass
 
 def RY(nucl):
     if (nucl == 'A') or (nucl == 'G'):
@@ -159,7 +138,7 @@ def find_purine_chains(purin_seq):
     while (i < len(purin_seq)):
         if purin_seq[i] != 'R':
             if start >= 0:
-                if (i - start >= 3): # min length
+                if (i - start >= alg_params.purine_orig_len): # min length
                     res.append( RangNucl(start, i) )
                 start = -1
         else:
@@ -183,7 +162,7 @@ def find_hydro_chains(hydro_seq):
     while (i < len(hydro_seq) - 1 ):
         if hydro_seq[i] not in ['K', 'M']:
             if start >= 0:
-                if (i - start >= 1): # min length
+                if (i - start >= alg_params.hydro_orig_len): # min length
                     if alg_params.flexible_endings:
                         res.append( RangNucl(start , i ) )
                     else:
@@ -227,23 +206,76 @@ def set_matrix_value(a_range, b_range, pairs):
     return pairs
 
 
-def check_seq(seq, a_range, b_range, pairs):
+def check_seq(seq, a_range, b_range, pairs, min_len = 0):
     seq_a = seq[a_range.start:a_range.end]
     seq_b = seq[b_range.start:b_range.end]
 
-    if (seq_a == seq_b):
-        pairs = set_matrix_value(a_range, b_range, pairs)
-    elif( alg_params.reverse_mode and seq_a == seq_b[::-1] ):
-        pairs = set_matrix_value_reverse(a_range, b_range, pairs)
-
-
+    if a_range.len >= min_len:
+        if (seq_a == seq_b):
+            pairs = set_matrix_value(a_range, b_range, pairs)
+        elif( alg_params.reverse_mode and seq_a == seq_b[::-1] ):
+            pairs = set_matrix_value_reverse(a_range, b_range, pairs)
 
 
     return pairs
 
 
+def set_range(a_range, b_range, pairs, len = 0):
+    if a_range.len >= len:
+        pairs = set_matrix_value(a_range, b_range, pairs)
+        pairs = set_matrix_value_reverse(a_range, b_range, pairs)
+
+    return pairs
+
+def get_helper_pts(len):
+    x = []
+    y_central = []
+
+    y_above = []
+    y_above2 = []
+    y_above3 = []
+
+    y_below = []
+    y_below2 = []
+    y_below3 = []
+
+    for i in range(0, len):
+        x.append(i)
+        y_central.append(i)
+        y_above.append(i + 75)
+        y_above2.append(i + 150)
+        y_above3.append(i + 300)
+
+        y_below.append(i - 75)
+        y_below2.append(i - 150)
+        y_below3.append(i - 300)
 
 
+    central_pts = pd.DataFrame({'x': pd.Series(x, dtype=int), 'y': pd.Series(y_central, dtype=int)})
+    above_pts = pd.DataFrame({'x': pd.Series(x, dtype=int), 'y': pd.Series(y_above, dtype=int)})
+    above2_pts = pd.DataFrame({'x': pd.Series(x, dtype=int), 'y': pd.Series(y_above2, dtype=int)})
+    above3_pts = pd.DataFrame({'x': pd.Series(x, dtype=int), 'y': pd.Series(y_above3, dtype=int)})
+
+    below_pts = pd.DataFrame({'x': pd.Series(x, dtype=int), 'y': pd.Series(y_below, dtype=int)})
+    below2_pts = pd.DataFrame({'x': pd.Series(x, dtype=int), 'y': pd.Series(y_below2, dtype=int)})
+    below3_pts = pd.DataFrame({'x': pd.Series(x, dtype=int), 'y': pd.Series(y_below3, dtype=int)})
+
+    return central_pts, above_pts, above2_pts, above3_pts, below_pts, below2_pts, below3_pts
+
+def get_tandem_points(tandem_seq):
+    x = []
+    y = []
+    for i in range(0, len(tandem_seq) ):
+        if tandem_seq[i].islower():
+            for k in range(0, len(tandem_seq), 8):
+                x.append(i)
+                y.append(k)
+                x.append(k)
+                y.append(i)
+
+    tandem_pts = pd.DataFrame({'x': pd.Series(x, dtype=int), 'y': pd.Series(y, dtype=int)})
+
+    return tandem_pts
 
 def test():
     data_url = 'http://bit.ly/2cLzoxH'
@@ -274,6 +306,11 @@ if __name__ == '__main__':
     alg_params.reverse_mode = config['DEFAULT'].getboolean('reverse_mode')
     alg_params.flexible_endings = config['DEFAULT'].getboolean('flexible_endings')
 
+    alg_params.purine_orig_len = config['DEFAULT'].getint('purine_orig_len')
+    alg_params.hydro_orig_len = config['DEFAULT'].getint('hydro_orig_len')
+    alg_params.purine_len = config['DEFAULT'].getint('purine_len')
+    alg_params.hydro_len = config['DEFAULT'].getint('hydro_len')
+
 
     all_chr = ['1']
 
@@ -284,6 +321,9 @@ if __name__ == '__main__':
         chr_filename = 'chr' + cur_chr + '.fa'
 
         full_filename = os.path.join(chrom_dir, chr_filename)
+
+        #full_filename = 'test2_fp_100.fa'
+        #output = 'test2_fp_100.png'
 
         if not os.path.exists(full_filename):
             continue
@@ -297,19 +337,21 @@ if __name__ == '__main__':
         num_pages = 1
 
         common_start = 30000000
+        step = 5000
         for k in range(0, num_pages ):
             reset_df_data()
 
-            sequence = sequence.upper()
-            start_cur = common_start + k * 5000
-            end_cur =   common_start + k * 5000 + 5000
+            start_cur = common_start + k * step
+            end_cur =   common_start + k * step + step
             chunk_sequence = sequence[start_cur:end_cur]
 
             print(start_cur, end_cur)
             #chunk_sequence = 'NnnnnnnnCaaaaaatCgatatatatCaaaaaatGgtgnnnnGtctctcaNnnnggggGtctctcg'
             #chunk_sequence = chunk_sequence.upper()
 
-
+            #chunk_sequence = 'ATCTCAGTCCTGGGGAAGCTCATGATGGAACCTTGTCCAGGGGGTTCTAATCTCAGTCCTGGGGAAGCTCATGATGGAACCTTGTCCAGGGGGTTCTAATCTCAGTCCTGGGGAAGCTCATGATGGAACCTTGTCCAGGGGGTTCTAATCTCAGTCCTGGGGAAGCTCATGATGGAACCTTGTCCAGGGGGTTCTAATCTCAGTCCTGGGGAAGCTCATGATGGAACCTTGTCCAGGGGGTTCTA'
+            tandem_sequence = chunk_sequence
+            chunk_sequence = chunk_sequence.upper()
 
             purin_seq = to_purin(chunk_sequence)
             hydro_seq = to_hydro(chunk_sequence)
@@ -320,33 +362,83 @@ if __name__ == '__main__':
             hydro_list = find_hydro_chains(hydro_seq)
             hydro_list = sorted(hydro_list)
 
+            print(datetime.datetime.now())
+            print('before calc')
 
             for cur_group in range (0, len(purine_list) - 1):
                 for i in range(cur_group + 1, len(purine_list) ):
                     if purine_list[cur_group].len == purine_list[i].len:
                         pairs_p = check_seq(chunk_sequence, purine_list[cur_group], purine_list[i], pairs_p)
+                        pairs_p2 = set_range(purine_list[cur_group], purine_list[i], pairs_p2, alg_params.purine_len)
+                    else:
+                        break
+
 
             for cur_group in range (0, len(hydro_list) - 1):
                 for i in range(cur_group + 1, len(hydro_list) ):
                     if hydro_list[cur_group].len == hydro_list[i].len:
                         pairs_h = check_seq(chunk_sequence, hydro_list[cur_group], hydro_list[i], pairs_h)
+                        pairs_h2 = check_seq(hydro_seq, hydro_list[cur_group], hydro_list[i], pairs_h2, alg_params.hydro_len)
+                    else:
+                        break
 
+            print(datetime.datetime.now())
+            print('after calc intervals')
+
+            central_pts, above_pts, above2_pts, above3_pts, below_pts, below2_pts,  below3_pts = get_helper_pts(len(chunk_sequence) )
+            print(datetime.datetime.now())
+            print('after calc lines')
+            tandem_pts = get_tandem_points(tandem_sequence)
+
+            print(datetime.datetime.now())
+            print('after calc tandems')
 
             pairs_common = pd.merge(pairs_p, pairs_h, how="inner", on=["x", "y"])
 
-            pairs_p['type'] = 'Purine'
-            pairs_h['type'] = 'Hydrocode'
-            pairs_common['type'] = 'Common'
+            tandem_pts['type'] =   'Tandems'
+            central_pts['type'] = 'Diagonal'
+            above_pts['type'] =   'Above 75'
+            above2_pts['type'] =  'Above 150'
+            above3_pts['type'] =  'Above 300'
 
-            pairs_all = pd.concat([pairs_p, pairs_h, pairs_common])
+            below_pts['type'] =   'Below 75'
+            below2_pts['type'] =  'Below 150'
+            below3_pts['type'] =  'Below 300'
+
+            pairs_h2['type'] = 'Hydrocode by Hydrocode. ' + 'MinLen: {}'.format(alg_params.hydro_len)
+            pairs_p2['type'] = 'Purine by Length. ' + 'MinLen: {}'.format(alg_params.purine_len)
+            pairs_p['type'] = 'Purine by Nucleotides. ' + 'MinLen: {}'.format(alg_params.purine_orig_len)
+            pairs_h['type'] = 'Hydrocode by Nucleotides. ' + 'MinLen: {}'.format(alg_params.hydro_orig_len)
+            pairs_common['type'] = 'Common P & H by Nucleotides'
+
+            pairs_all = pd.concat([tandem_pts, central_pts, above_pts, above2_pts, above3_pts, below_pts, below2_pts, below3_pts, \
+                                   pairs_h2, pairs_p2, pairs_p, pairs_h, pairs_common])
+
+            print(datetime.datetime.now())
+            print('after concat. before plot')
 
             palette = []
 
+            palette.append('paleturquoise')
+            palette.append('olivedrab')
+            palette.append('lightgreen')
+            palette.append('lightgreen')
+            palette.append('lightgreen')
+            palette.append('lightgreen')
+            palette.append('lightgreen')
+            palette.append('lightgreen')
+
+            if pairs_h2.shape[0] > 0:
+                palette.append('lightsteelblue')
+
+            if pairs_p2.shape[0] > 0:
+                palette.append('navajowhite')
+
             if pairs_p.shape[0] > 0:
-                palette.append('red')
+                palette.append('brown')
 
             if pairs_h.shape[0] > 0:
-                palette.append('blue')
+                palette.append('royalblue')
 
             if pairs_common.shape[0] > 0:
                 palette.append('black')
@@ -355,9 +447,10 @@ if __name__ == '__main__':
             ax = fig.add_subplot(111)  # The big subplot
             ax.set_aspect('equal', adjustable='box')
 
-            sns.scatterplot(data=pairs_all, x="x", y="y", hue="type",  ax=ax, s=0.15,  palette=palette)
-            plt.legend([], [], frameon=False)
+            sns.scatterplot(data=pairs_all, x="x", y="y", hue="type",  ax=ax, s=0.15,  palette=palette, legend='full')
+            #plt.legend([], [], frameon=False)
 
+            ax.legend(loc='upper left', markerscale=0.2, bbox_to_anchor=(1.04, 1), fontsize=2)
             ax.set_xlim(0, len(chunk_sequence))
             ax.set_ylim(0, len(chunk_sequence))
 
