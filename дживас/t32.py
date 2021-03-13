@@ -563,7 +563,7 @@ if __name__ == '__main__':
             fig.tight_layout()
 
             output_png = '{}_{}.png'.format(output, k)
-            plt.savefig(output_png, dpi=4800, bbox_inches='tight')
+            plt.savefig(output_png, dpi=2400, bbox_inches='tight')
             plt.clf()
             plt.close()
 
