@@ -5,6 +5,8 @@ import os
 from Bio import SeqIO
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pywt
+
 
 import datetime
 import gc
@@ -277,6 +279,58 @@ def get_tandem_points(tandem_seq):
 
     return tandem_pts
 
+def make_wavelet(seq):
+
+
+        seq_np = np.zeros(len(seq), dtype=np.int32)
+
+        for i in range(0, len(seq)):
+            if seq[i] in ['C', 'T']:
+                seq_np[i] = 1
+            elif seq[i] in ['A', 'G']:
+                seq_np[i] = -1
+            elif seq[i] == 'N':
+                seq_np[i] = 0
+            else:
+                assert(False)
+
+            idx_gaps = np.where(seq_np == 0)[0]
+
+        seq_np_cur = seq_np.copy()
+
+        print(len(idx_gaps) )
+
+        seq_np_cur[idx_gaps] = np.random.binomial(n=1, p=0.5, size=len(idx_gaps))
+        seq_np_cur[idx_gaps] = (seq_np_cur[idx_gaps] * 2) - 1
+
+        scales = np.arange(1, 150)
+        waveletname = 'morl'
+        dt = 1
+
+        [coefficients, frequencies] = pywt.cwt(seq_np_cur - np.mean(seq_np_cur), scales, waveletname, dt)
+
+        idxs_del = np.where(frequencies > 0.5)[0] #according to Nyquist
+        frequencies = np.delete(frequencies, idxs_del)
+        coefficients = np.delete(coefficients, idxs_del, 0)
+
+        power = (abs(coefficients)) ** 2
+        period = [ round( 1 / x) for x in frequencies ]
+
+        if(len(seq) > 100000):
+            chrom_poses = [ round(x / 1000000, 1) for x in range(0, len(seq)) ]
+            chrom_label = "chrom pos (Mb)"
+        else:
+            chrom_poses = [ int(x)  for x in range(0, len(seq)) ]
+            chrom_label = "chrom pos (bp)"
+
+
+        heatmap_pd = pd.DataFrame(
+            data=power,  # values
+            index=period,
+            columns=chrom_poses)
+
+        return heatmap_pd
+
 def test():
     data_url = 'http://bit.ly/2cLzoxH'
     gapminder = pd.read_csv(data_url)
@@ -363,6 +417,11 @@ if __name__ == '__main__':
             hydro_list = sorted(hydro_list)
 
             print(datetime.datetime.now())
+            print('before wavelet')
+
+            heatmap_wavelets = make_wavelet(chunk_sequence)
+
+            print(datetime.datetime.now())
             print('before calc')
 
             for cur_group in range (0, len(purine_list) - 1):
@@ -444,8 +503,31 @@ if __name__ == '__main__':
                 palette.append('black')
 
             fig = plt.figure()
-            ax = fig.add_subplot(111)  # The big subplot
+
+            if False:
+                ax0 = fig.add_subplot(111)  # The big subplot
+                ax0.spines['top'].set_color('none')
+                ax0.spines['bottom'].set_color('none')
+                ax0.spines['left'].set_color('none')
+                ax0.spines['right'].set_color('none')
+                ax0.tick_params(labelcolor='w', top=False, bottom=False, left=False, right=False)
+
+            ax_w = fig.add_subplot(211)  # The big subplot
+            #ax_w.set_aspect('equal', adjustable='box')
+
+            ax = fig.add_subplot(212)  # The big subplot
             ax.set_aspect('equal', adjustable='box')
+
+            plt.sca(ax_w)
+
+            sns.set(font_scale=0.5)
+            sns.heatmap(heatmap_wavelets, cbar_kws={'label': 'Energy'}, ax=ax_w, cmap = 'plasma')
+
+            ax_w.set_xlim(0, len(chunk_sequence))
+            plt.xticks(fontsize=3)
+            plt.yticks(fontsize=3)
+
+            plt.sca(ax)
 
             sns.scatterplot(data=pairs_all, x="x", y="y", hue="type",  ax=ax, s=0.15,  palette=palette, legend='full')
             #plt.legend([], [], frameon=False)
@@ -481,7 +563,7 @@ if __name__ == '__main__':
             fig.tight_layout()
 
             output_png = '{}_{}.png'.format(output, k)
-            plt.savefig(output_png, dpi=2400, bbox_inches='tight')
+            plt.savefig(output_png, dpi=4800, bbox_inches='tight')
             plt.clf()
             plt.close()
 
