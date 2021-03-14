@@ -392,6 +392,9 @@ if __name__ == '__main__':
 
         common_start = 30000000
         step = 5000
+
+        #trans_starts = [6424776, 6785460, 7771296, 9539972, 9943475, 10210570, 11054589, 12019833, 15236561, 15758792]
+
         for k in range(0, num_pages ):
             reset_df_data()
 
@@ -512,20 +515,10 @@ if __name__ == '__main__':
                 ax0.spines['right'].set_color('none')
                 ax0.tick_params(labelcolor='w', top=False, bottom=False, left=False, right=False)
 
-            ax_w = fig.add_subplot(211)  # The big subplot
-            #ax_w.set_aspect('equal', adjustable='box')
 
-            ax = fig.add_subplot(212)  # The big subplot
+            ax = fig.add_subplot(111)  # The big subplot
             ax.set_aspect('equal', adjustable='box')
 
-            plt.sca(ax_w)
-
-            sns.set(font_scale=0.5)
-            sns.heatmap(heatmap_wavelets, cbar_kws={'label': 'Energy'}, ax=ax_w, cmap = 'plasma')
-
-            ax_w.set_xlim(0, len(chunk_sequence))
-            plt.xticks(fontsize=3)
-            plt.yticks(fontsize=3)
 
             plt.sca(ax)
 
@@ -566,6 +559,29 @@ if __name__ == '__main__':
             plt.savefig(output_png, dpi=2400, bbox_inches='tight')
             plt.clf()
             plt.close()
+
+
+
+            ax_w = fig.add_subplot(111)  # The big subplot
+            #ax_w.set_aspect('equal', adjustable='box')
+
+            plt.sca(ax_w)
+
+            sns.set(font_scale=0.5)
+            sns.heatmap(heatmap_wavelets, cbar_kws={'label': 'Energy'}, ax=ax_w, cmap = 'plasma')
+
+            ax_w.set_xlim(0, len(chunk_sequence))
+            plt.xticks(fontsize=3)
+            plt.yticks(fontsize=3)
+
+            #ax_w.set_title(description, fontweight='bold', fontsize=4)
+
+            fig.tight_layout()
+
+            output_png = '{}_{}.png'.format(output + '_w', k)
+            plt.savefig(output_png, dpi=2400, bbox_inches='tight')
+            plt.close()
+
 
     print(datetime.datetime.now())
 
