@@ -3,9 +3,13 @@ import numpy as np
 import configparser
 import os
 from Bio import SeqIO
+import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pywt
+
+
+from gtfparse import read_gtf
 
 
 import datetime
@@ -264,6 +268,29 @@ def get_helper_pts(len):
 
     return central_pts, above_pts, above2_pts, above3_pts, below_pts, below2_pts, below3_pts
 
+
+def get_axes(len):
+    x = []
+    y = []
+
+    x_zero = []
+    y_zero = []
+
+
+    for i in range(0, len):
+        x.append(i)
+        y.append(i)
+
+        x_zero.append( int(len / 2) )
+        y_zero.append( int(len / 2) )
+
+
+
+    x_pts = pd.DataFrame({'x': pd.Series(x, dtype=int), 'y': pd.Series(y_zero, dtype=int)})
+    y_pts = pd.DataFrame({'x': pd.Series(x_zero, dtype=int), 'y': pd.Series(y, dtype=int)})
+
+    return x_pts, y_pts
+
 def get_tandem_points(tandem_seq):
     x = []
     y = []
@@ -279,26 +306,52 @@ def get_tandem_points(tandem_seq):
 
     return tandem_pts
 
-def make_wavelet(seq):
+def get_code_by_type(seq, type):
+
+    if type == 'purine':
+        anchor_seq = seq
+        code1 = ['C', 'T']
+        code2 = ['A', 'G']
+
+    elif type == 'strong':
+        anchor_seq = seq
+        code1 = ['C', 'G']
+        code2 = ['A', 'T']
+
+    elif type == 'hydro':
+        anchor_seq = to_hydro(seq)
+        code1 = ['K', 'M']
+        code2 = ['F', 'P']
+    elif type == 'Gcode':
+        anchor_seq = seq
+        code1 = ['G']
+        code2 = ['A', 'C', 'T']
+    elif type == 'Acode':
+        anchor_seq = seq
+        code1 = ['A']
+        code2 = ['G', 'C', 'T']
+    else:
+        assert(False)
+
+    seq_np = np.zeros(len(anchor_seq), dtype=np.int32)
+
+    for i in range(0, len(anchor_seq)):
+        if anchor_seq[i] in code1:
+            seq_np[i] = 1
+        elif anchor_seq[i] in code2:
+            seq_np[i] = -1
+        elif anchor_seq[i] == 'N':
+            seq_np[i] = 0
+        else:
+            assert (False)
+
+    return seq_np
 
 
-        seq_np = np.zeros(len(seq), dtype=np.int32)
-
-        for i in range(0, len(seq)):
-            if seq[i] in ['C', 'T']:
-                seq_np[i] = 1
-            elif seq[i] in ['A', 'G']:
-                seq_np[i] = -1
-            elif seq[i] == 'N':
-                seq_np[i] = 0
-            else:
-                assert(False)
-
-            idx_gaps = np.where(seq_np == 0)[0]
-
+def make_wavelet(seq, type):
+        seq_np = get_code_by_type(seq, type)
+        idx_gaps = np.where(seq_np == 0)[0]
         seq_np_cur = seq_np.copy()
-
-        print(len(idx_gaps) )
 
         seq_np_cur[idx_gaps] = np.random.binomial(n=1, p=0.5, size=len(idx_gaps))
         seq_np_cur[idx_gaps] = (seq_np_cur[idx_gaps] * 2) - 1
@@ -316,11 +369,11 @@ def make_wavelet(seq):
         power = (abs(coefficients)) ** 2
         period = [ round( 1 / x) for x in frequencies ]
 
-        if(len(seq) > 100000):
-            chrom_poses = [ round(x / 1000000, 1) for x in range(0, len(seq)) ]
+        if(len(seq_np) > 100000):
+            chrom_poses = [ round(x / 1000000, 1) for x in range(0, len(seq_np)) ]
             chrom_label = "chrom pos (Mb)"
         else:
-            chrom_poses = [ int(x)  for x in range(0, len(seq)) ]
+            chrom_poses = [ int(x)  for x in range(0, len(seq_np)) ]
             chrom_label = "chrom pos (bp)"
 
 
@@ -336,8 +389,65 @@ def test():
     gapminder = pd.read_csv(data_url)
     print( np.unique( gapminder['continent'] ))
 
+def test_visual():
+    for k in range(0, 3):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)  # The big subplot
+        ax.set_aspect('equal', adjustable='box')
+
+        plt.sca(ax)
+
+        pairs_all = pd.DataFrame({'x': pd.Series(np.zeros(500), dtype=int), 'y': pd.Series(np.zeros(500), dtype=int)})
+        sns.scatterplot(data=pairs_all, x="x", y="y", ax=ax, s=0.15)
+        # plt.legend([], [], frameon=False)
+
+        ax.legend(loc='upper left', markerscale=0.2, bbox_to_anchor=(1.04, 1), fontsize=2)
+        ax.set_xlim(0, 100)
+        ax.set_ylim(0, 100)
+
+        # ax.set_xticklabels(ax.get_xticklabels(), fontsize = 4)
+        # ax.set_yticklabels(ax.get_yticklabels(), fontsize = 4)
+
+        plt.xticks(np.arange(0, 100 + 1, 5), fontsize=2 )
+        plt.yticks(np.arange(0, 100 + 1, 5), fontsize=2 )
+
+        ax.set_xlabel("")
+        ax.set_ylabel("")
+
+        fig.tight_layout()
+
+        output_png = '{}_{}.png'.format('file1', k)
+        plt.savefig(output_png, dpi=2400, bbox_inches='tight')
+        fig.clear()
+        plt.close(fig)
+
+        fig = plt.figure()
+        ax_w = fig.add_subplot(111)  # The big subplot
+        # ax_w.set_aspect('equal', adjustable='box')
+
+        plt.sca(ax_w)
+
+        sns.set(font_scale=0.5)
+        sns.heatmap(np.zeros((100, 100)), cbar_kws={'label': 'Energy'}, ax=ax_w, cmap='plasma')
+
+        ax_w.set_xlim(0, 100)
+        plt.xticks(fontsize=3)
+        plt.yticks(fontsize=3)
+
+        # ax_w.set_title(description, fontweight='bold', fontsize=4)
+
+        fig.tight_layout()
+
+        output_png = '{}_{}.png'.format('file2', k)
+        plt.savefig(output_png, dpi=2400, bbox_inches='tight')
+        fig.clear()
+        plt.close(fig)
+
+        matplotlib.rc_file_defaults()
+
 if __name__ == '__main__':
     #test()
+    #test_visual()
     #exit(0)
 
     print(datetime.datetime.now())
@@ -365,17 +475,31 @@ if __name__ == '__main__':
     alg_params.purine_len = config['DEFAULT'].getint('purine_len')
     alg_params.hydro_len = config['DEFAULT'].getint('hydro_len')
 
+    gtf_file = 'hg38.ncbiRefSeq.gtf'
+    df_gtf = read_gtf(gtf_file)
 
     all_chr = ['1']
+
+    use_trans = False
 
     for cur_chr in all_chr:
 
         print(cur_chr)
+        num_pages = 1
+
+        if use_trans:
+            gtf_chr = 'chr' + cur_chr
+            df_gtf_cur = df_gtf.loc[df_gtf['seqname'] == gtf_chr].copy()
+            df_gtf_cur_trans = df_gtf_cur.loc[ (df_gtf_cur['feature'] == 'transcript') & (df_gtf_cur['strand'] == '+')  ].copy()
+            df_trans_to_plot = df_gtf_cur_trans.sample(n=30)
+            trans_starts = [6424776, 6785460, 7771296, 9539972, 9943475, 10210570, 11054589, 12019833, 15236561, 15758792]
+            trans_starts = df_trans_to_plot.loc[:, 'start'].tolist()
+            num_pages = len(trans_starts)
 
         chr_filename = 'chr' + cur_chr + '.fa'
 
         full_filename = os.path.join(chrom_dir, chr_filename)
-
+        full_filename = 'Test_sequence2.fa'
         #full_filename = 'test2_fp_100.fa'
         #output = 'test2_fp_100.png'
 
@@ -388,19 +512,25 @@ if __name__ == '__main__':
             name, sequence = fasta.id, str(fasta.seq)
             break
 
-        num_pages = 1
 
         common_start = 30000000
         step = 5000
 
-        #trans_starts = [6424776, 6785460, 7771296, 9539972, 9943475, 10210570, 11054589, 12019833, 15236561, 15758792]
+
 
         for k in range(0, num_pages ):
             reset_df_data()
 
-            start_cur = common_start + k * step
-            end_cur =   common_start + k * step + step
-            chunk_sequence = sequence[start_cur:end_cur]
+            if use_trans:
+                trans_start = trans_starts[k]
+
+                start_cur = int(trans_start - step / 2)
+                end_cur = int(trans_start + step / 2)
+                chunk_sequence = sequence[start_cur:end_cur]
+            else:
+                start_cur = 0
+                end_cur = len(sequence)
+                chunk_sequence = sequence
 
             print(start_cur, end_cur)
             #chunk_sequence = 'NnnnnnnnCaaaaaatCgatatatatCaaaaaatGgtgnnnnGtctctcaNnnnggggGtctctcg'
@@ -419,10 +549,6 @@ if __name__ == '__main__':
             hydro_list = find_hydro_chains(hydro_seq)
             hydro_list = sorted(hydro_list)
 
-            print(datetime.datetime.now())
-            print('before wavelet')
-
-            heatmap_wavelets = make_wavelet(chunk_sequence)
 
             print(datetime.datetime.now())
             print('before calc')
@@ -447,7 +573,9 @@ if __name__ == '__main__':
             print(datetime.datetime.now())
             print('after calc intervals')
 
+            x_ax_pts, y_ax_pts = get_axes(len(chunk_sequence))
             central_pts, above_pts, above2_pts, above3_pts, below_pts, below2_pts,  below3_pts = get_helper_pts(len(chunk_sequence) )
+
             print(datetime.datetime.now())
             print('after calc lines')
             tandem_pts = get_tandem_points(tandem_sequence)
@@ -458,6 +586,9 @@ if __name__ == '__main__':
             pairs_common = pd.merge(pairs_p, pairs_h, how="inner", on=["x", "y"])
 
             tandem_pts['type'] =   'Tandems'
+            x_ax_pts['type'] = 'X_axis'
+            y_ax_pts['type'] = 'Y_axis'
+
             central_pts['type'] = 'Diagonal'
             above_pts['type'] =   'Above 75'
             above2_pts['type'] =  'Above 150'
@@ -473,7 +604,7 @@ if __name__ == '__main__':
             pairs_h['type'] = 'Hydrocode by Nucleotides. ' + 'MinLen: {}'.format(alg_params.hydro_orig_len)
             pairs_common['type'] = 'Common P & H by Nucleotides'
 
-            pairs_all = pd.concat([tandem_pts, central_pts, above_pts, above2_pts, above3_pts, below_pts, below2_pts, below3_pts, \
+            pairs_all = pd.concat([tandem_pts, x_ax_pts, y_ax_pts, central_pts, above_pts, above2_pts, above3_pts, below_pts, below2_pts, below3_pts, \
                                    pairs_h2, pairs_p2, pairs_p, pairs_h, pairs_common])
 
             print(datetime.datetime.now())
@@ -481,7 +612,12 @@ if __name__ == '__main__':
 
             palette = []
 
+            if tandem_pts.shape[0] > 0:
+                palette.append('paleturquoise')
+
             palette.append('paleturquoise')
+            palette.append('paleturquoise')
+
             palette.append('olivedrab')
             palette.append('lightgreen')
             palette.append('lightgreen')
@@ -506,15 +642,6 @@ if __name__ == '__main__':
                 palette.append('black')
 
             fig = plt.figure()
-
-            if False:
-                ax0 = fig.add_subplot(111)  # The big subplot
-                ax0.spines['top'].set_color('none')
-                ax0.spines['bottom'].set_color('none')
-                ax0.spines['left'].set_color('none')
-                ax0.spines['right'].set_color('none')
-                ax0.tick_params(labelcolor='w', top=False, bottom=False, left=False, right=False)
-
 
             ax = fig.add_subplot(111)  # The big subplot
             ax.set_aspect('equal', adjustable='box')
@@ -557,30 +684,41 @@ if __name__ == '__main__':
 
             output_png = '{}_{}.png'.format(output, k)
             plt.savefig(output_png, dpi=2400, bbox_inches='tight')
-            plt.clf()
-            plt.close()
+            fig.clear()
+            plt.close(fig)
+
+            print(datetime.datetime.now())
+            print('before wavelet')
+
+            code_types = ['purine', 'strong', 'hydro', 'Gcode', 'Acode']
+
+            for m in range(0, len(code_types) ):
+                heatmap_wavelets = make_wavelet(chunk_sequence, code_types[m])
 
 
+                fig = plt.figure()
+                ax_w = fig.add_subplot(111)  # The big subplot
+                #ax_w.set_aspect('equal', adjustable='box')
 
-            ax_w = fig.add_subplot(111)  # The big subplot
-            #ax_w.set_aspect('equal', adjustable='box')
+                plt.sca(ax_w)
 
-            plt.sca(ax_w)
+                sns.set(font_scale=0.5)
+                sns.heatmap(heatmap_wavelets, cbar_kws={'label': 'Energy'}, ax=ax_w, cmap = 'plasma')
 
-            sns.set(font_scale=0.5)
-            sns.heatmap(heatmap_wavelets, cbar_kws={'label': 'Energy'}, ax=ax_w, cmap = 'plasma')
+                ax_w.set_xlim(0, len(chunk_sequence))
+                plt.xticks(fontsize=3)
+                plt.yticks(fontsize=3)
 
-            ax_w.set_xlim(0, len(chunk_sequence))
-            plt.xticks(fontsize=3)
-            plt.yticks(fontsize=3)
+                #ax_w.set_title(description, fontweight='bold', fontsize=4)
 
-            #ax_w.set_title(description, fontweight='bold', fontsize=4)
+                fig.tight_layout()
 
-            fig.tight_layout()
+                output_png = '{}_{}_wavelet_type_{}.png'.format(output, k, code_types[m])
+                plt.savefig(output_png, dpi=2400, bbox_inches='tight')
+                fig.clear()
+                plt.close(fig)
 
-            output_png = '{}_{}.png'.format(output + '_w', k)
-            plt.savefig(output_png, dpi=2400, bbox_inches='tight')
-            plt.close()
+                matplotlib.rc_file_defaults()
 
 
     print(datetime.datetime.now())

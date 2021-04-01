@@ -72,7 +72,7 @@ if __name__ == '__main__':
     output = config['DEFAULT']['output_file']
     gtf_file = config['DEFAULT']['gtf_file']
 
-    df_gtf = read_gtf("hg19.ncbiRefSeq.gtf")
+    df_gtf = read_gtf(gtf_file)
 
     pd_header = pd.read_csv(snp_table_file, sep='\t', header=0, nrows=3)
     determineColumns(pd_header)
