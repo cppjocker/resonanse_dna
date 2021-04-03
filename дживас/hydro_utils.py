@@ -1,3 +1,84 @@
+dict_hd07 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '1', 'CG' : '0', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '0', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+
+dict_hd71 = {'AA': '0', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '1', 'CG' : '0', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '0', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+
+dict_hd72 = {'AA': '1', 'AC' : '0', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '1', 'CG' : '0', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '0', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+
+dict_hd73 = {'AA': '1', 'AC' : '1', 'AG' : '0', 'AT' : '0', 'CA' : '1', 'CC' : '1', 'CG' : '0', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '0', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+
+dict_hd74 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '1', 'CA' : '1', 'CC' : '1', 'CG' : '0', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '0', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+
+dict_hd75 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '0', 'CC' : '1', 'CG' : '0', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '0', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+
+dict_hd76 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '0', 'CG' : '0', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '0', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+
+dict_hd77 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '1', 'CG' : '1', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '0', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+
+dict_hd78 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '1', 'CG' : '0', 'CT' : '0', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '0', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+
+dict_hd79 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '1', 'CG' : '0', 'CT' : '1', 'GA' : '0', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '0', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+
+dict_hd80 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '1', 'CG' : '0', 'CT' : '1', 'GA' : '1', 'GC' : '0', 'GG' : '1', 'GT' : '1', 'TA' : '0', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+
+dict_hd81 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '1', 'CG' : '0', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '0', 'GT' : '1', 'TA' : '0', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+
+dict_hd82 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '1', 'CG' : '0', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '0', 'TA' : '0', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+
+dict_hd83 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '1', 'CG' : '0', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '1', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+
+dict_hd84 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '1', 'CG' : '0', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '0', 'TC' : '0', 'TG' : '1', 'TT' : '1' }
+
+dict_hd85 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '1', 'CG' : '0', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '0', 'TC' : '1', 'TG' : '0', 'TT' : '1' }
+
+dict_hd86 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '1', 'CG' : '0', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '0', 'TC' : '1', 'TG' : '1', 'TT' : '0' }
+
+
+def calc_hydro_letter_by_code(two_letters, code):
+    assert(len(two_letters) == 2)
+
+    if two_letters[0] == 'N' or two_letters[1] == 'N':
+        left_chain_start_code = 'N'
+        return left_chain_start_code
+
+    if code == 'hd_07':
+        left_chain_start_code = dict_hd07[two_letters]
+    elif code == 'hd_71':
+        left_chain_start_code = dict_hd71[two_letters]
+    elif code == 'hd_72':
+        left_chain_start_code = dict_hd72[two_letters]
+    elif code == 'hd_73':
+        left_chain_start_code = dict_hd73[two_letters]
+    elif code == 'hd_74':
+        left_chain_start_code = dict_hd74[two_letters]
+    elif code == 'hd_75':
+        left_chain_start_code = dict_hd75[two_letters]
+    elif code == 'hd_76':
+        left_chain_start_code = dict_hd76[two_letters]
+    elif code == 'hd_77':
+        left_chain_start_code = dict_hd77[two_letters]
+    elif code == 'hd_78':
+        left_chain_start_code = dict_hd78[two_letters]
+    elif code == 'hd_79':
+        left_chain_start_code = dict_hd79[two_letters]
+    elif code == 'hd_80':
+        left_chain_start_code = dict_hd80[two_letters]
+    elif code == 'hd_81':
+        left_chain_start_code = dict_hd81[two_letters]
+    elif code == 'hd_82':
+        left_chain_start_code = dict_hd82[two_letters]
+    elif code == 'hd_83':
+        left_chain_start_code = dict_hd83[two_letters]
+    elif code == 'hd_84':
+        left_chain_start_code = dict_hd84[two_letters]
+    elif code == 'hd_85':
+        left_chain_start_code = dict_hd85[two_letters]
+    elif code == 'hd_86':
+        left_chain_start_code = dict_hd86[two_letters]
+    else:
+        assert(False)
+
+    return left_chain_start_code
+
 def calc_hydro_letter(two_letters):
     assert(len(two_letters) == 2)
 
@@ -96,6 +177,67 @@ def calc_hydro(seq, pos, nucl):
         len_right = len_right + 1
 
     if left_chain_start_letter not in {'k', 'm'} or right_chain_start_letter not in {'k', 'm'}:
+        total_len = max(len_left, len_right)
+    else:
+        total_len = len_left + len_right
+
+    return total_len, seq_orig, seq_returned
+
+
+
+def calc_hydro_by_code(seq, pos, nucl, code):
+    left_start = seq[pos - 1] + nucl
+    len_left = 0
+
+    left_chain_start_letter = calc_hydro_letter_by_code(left_start, code)
+    next_hydro_letter = left_chain_start_letter
+
+    if next_hydro_letter == '1':
+        len_left = 1
+
+    seq_orig = nucl
+    seq_orig = seq[pos - 1].lower() + seq_orig
+    seq_returned = next_hydro_letter.upper()
+
+    for i in range(pos - 1, 0, -1):
+
+        next_two_letters = seq[i - 1] + seq[i]
+        next_hydro_letter = calc_hydro_letter_by_code(next_two_letters, code)
+
+        seq_returned = next_hydro_letter + seq_returned
+        seq_orig = seq[i - 1].lower() + seq_orig
+
+        if next_hydro_letter != '1':
+            break
+
+        len_left = len_left + 1
+
+    right_start = nucl + seq[pos + 1]
+    len_right = 0
+
+    right_chain_start_letter = calc_hydro_letter_by_code(right_start, code)
+    next_hydro_letter = right_chain_start_letter
+
+    if next_hydro_letter == '1':
+        len_right = 1
+
+
+    seq_returned = seq_returned + next_hydro_letter.upper()
+    seq_orig =  seq_orig + seq[pos + 1].lower()
+
+    for i in range(pos + 1, len(seq)):
+        next_two_letters = seq[i] + seq[i + 1]
+        next_hydro_letter = calc_hydro_letter_by_code(next_two_letters, code)
+
+        seq_returned = seq_returned + next_hydro_letter
+        seq_orig =  seq_orig + seq[i + 1].lower()
+
+        if next_hydro_letter != '1':
+            break
+
+        len_right = len_right + 1
+
+    if left_chain_start_letter != '1' or right_chain_start_letter != '1':
         total_len = max(len_left, len_right)
     else:
         total_len = len_left + len_right
