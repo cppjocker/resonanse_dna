@@ -35,3 +35,5 @@ for item in ax.get_xticklabels():
 
 plt.savefig("hydro_angles.png", bbox_inches = 'tight', dpi = 600)
 plt.close()
+
+hydro_angles.to_csv("hydro_angles.tsv", sep = '\t', index=False)
