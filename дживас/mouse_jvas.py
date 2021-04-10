@@ -9,6 +9,9 @@ import gc
 
 from argparse import ArgumentParser
 
+import purine_utils
+import hydro_utils
+
 class ColumnsSnp:
     id = ''
     chrom = ''
@@ -182,8 +185,8 @@ def parse():
             R1, Y1 = purine_utils.calc_RY(sequence, pos, allele_1)
             R2, Y2 = purine_utils.calc_RY(sequence, pos, allele_2)
 
-            km1, seq1, seq1_h = calc_hydro(sequence, pos, allele_1)
-            km2, seq2, seq2_h = calc_hydro(sequence, pos, allele_2)
+            km1, seq1, seq1_h = hydro_utils.calc_hydro(sequence, pos, allele_1)
+            km2, seq2, seq2_h = hydro_utils.calc_hydro(sequence, pos, allele_2)
 
             df_part.at[index, 'r1_len'] = R1
             df_part.at[index, 'y1_len'] = Y1
