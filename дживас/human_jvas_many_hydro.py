@@ -13,6 +13,9 @@ import hydro_utils
 from argparse import ArgumentParser
 
 code_list = ['hd_07', 'hd_71', 'hd_72', 'hd_73', 'hd_74', 'hd_75', 'hd_76', 'hd_77', 'hd_78', 'hd_79', 'hd_80', 'hd_81', 'hd_82', 'hd_83', 'hd_84', 'hd_85', 'hd_86']
+code_list = ['hd_07', 'hd_55', 'hd_56', 'hd_57', 'hd_58', 'hd_59', 'hd_60', 'hd_61', 'hd_62', 'hd_63', 'hd_64', 'hd_65',
+             'hd_66', 'hd_67', 'hd_68', 'hd_69', 'hd_70']
+
 
 class ColumnsSnp:
     id = ''
@@ -93,7 +96,7 @@ def parse():
     total_num = 0
     total_chr = 0
 
-    test_amount_seqs = 140
+    test_amount_seqs = 40
 
     for cur_chr in all_chr:
 
@@ -113,6 +116,9 @@ def parse():
 
         for code in code_list:
             df_part[code] = ''
+            if test_only:
+                df_part[code + "_seq1"] = ''
+                df_part[code + "_seq2"] = ''
 
         df_part['purine'] = ''
         df_part['remove'] = False
@@ -190,20 +196,17 @@ def parse():
 
                 df_part.at[index, code] = '{0};{1}'.format(km1, km2)
 
-            seq1 = [ c.lower() for c in sequence[pos-20:pos+20] ]
-            seq2 = seq1.copy()
+                if test_only:
+                    df_part.at[index, 'seq1'] = seq1
+                    df_part.at[index, 'seq2'] = seq2
 
-            seq1[19] = allele_1
-            seq2[19] = allele_2
-
-            seq1 = "".join(seq1)
-            seq2 = "".join(seq2)
+                    df_part.at[index, code + "_seq1"] = seq1_h
+                    df_part.at[index, code + "_seq2"] = seq2_h
+                    df_part.at[index, code + "_seq2"] = seq2_h
 
             total_num = total_num + 1
 
             if test_only:
-                df_part.at[index, 'seq1'] = seq1
-                df_part.at[index, 'seq2'] = seq2
 
                 if total_num >= test_amount_seqs:
                     df_part = df_part.iloc[0:test_amount_seqs]

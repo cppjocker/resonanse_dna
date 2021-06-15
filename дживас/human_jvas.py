@@ -106,7 +106,7 @@ def parse():
         for df_chunk in df_iter:
             df_chunk = df_chunk.dropna(subset=[columns.pos])
 
-            df_chunk = df_chunk.astype({columns.chrom: str, columns.pos: int})
+            df_chunk = df_chunk.astype({columns.chrom: str, columns.pos: int, columns.freq : float})
 
             df_part = df_part.append(df_chunk[df_chunk[columns.chrom] == cur_chr])
 
@@ -205,8 +205,8 @@ def parse():
             R1, Y1 = purine_utils.calc_RY(sequence, pos - 1, allele_1)
             R2, Y2 = purine_utils.calc_RY(sequence, pos - 1, allele_2)
 
-            km1, seq1, seq1_h = hydro_utils.calc_hydro(sequence, pos - 1, allele_1)
-            km2, seq2, seq2_h = hydro_utils.calc_hydro(sequence, pos - 1, allele_2)
+            km1, seq1, seq1_h = hydro_utils.calc_hydro_by_code(sequence, pos - 1, allele_1, code='hd_87')
+            km2, seq2, seq2_h = hydro_utils.calc_hydro_by_code(sequence, pos - 1, allele_2, code='hd_87')
 
             df_part.at[index, 'r1_len'] = R1
             df_part.at[index, 'y1_len'] = Y1

@@ -32,6 +32,26 @@ dict_hd85 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '
 
 dict_hd86 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '1', 'CG' : '0', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '0', 'TC' : '1', 'TG' : '1', 'TT' : '0' }
 
+dict_hd87 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '1', 'CG' : '1', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '1', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+
+
+dict_hd55 = {'AA': '0', 'AC' : '1', 'AG' : '1', 'AT' : '1', 'CA' : '1', 'CC' : '1', 'CG' : '1', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '1', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+dict_hd56 = {'AA': '1', 'AC' : '0', 'AG' : '1', 'AT' : '1', 'CA' : '1', 'CC' : '1', 'CG' : '1', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '1', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+dict_hd57 = {'AA': '1', 'AC' : '1', 'AG' : '0', 'AT' : '1', 'CA' : '1', 'CC' : '1', 'CG' : '1', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '1', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+dict_hd58 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '0', 'CA' : '1', 'CC' : '1', 'CG' : '1', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '1', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+dict_hd59 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '1', 'CA' : '0', 'CC' : '1', 'CG' : '1', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '1', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+dict_hd60 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '1', 'CA' : '1', 'CC' : '0', 'CG' : '1', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '1', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+dict_hd61 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '1', 'CA' : '1', 'CC' : '1', 'CG' : '0', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '1', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+dict_hd62 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '1', 'CA' : '1', 'CC' : '1', 'CG' : '1', 'CT' : '0', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '1', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+dict_hd63 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '1', 'CA' : '1', 'CC' : '1', 'CG' : '1', 'CT' : '1', 'GA' : '0', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '1', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+dict_hd64 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '1', 'CA' : '1', 'CC' : '1', 'CG' : '1', 'CT' : '1', 'GA' : '1', 'GC' : '0', 'GG' : '1', 'GT' : '1', 'TA' : '1', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+dict_hd65 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '1', 'CA' : '1', 'CC' : '1', 'CG' : '1', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '0', 'GT' : '1', 'TA' : '1', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+dict_hd66 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '1', 'CA' : '1', 'CC' : '1', 'CG' : '1', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '0', 'TA' : '1', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+dict_hd67 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '1', 'CA' : '1', 'CC' : '1', 'CG' : '1', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '0', 'TC' : '1', 'TG' : '1', 'TT' : '1' }
+dict_hd68 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '1', 'CA' : '1', 'CC' : '1', 'CG' : '1', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '1', 'TC' : '0', 'TG' : '1', 'TT' : '1' }
+dict_hd69 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '1', 'CA' : '1', 'CC' : '1', 'CG' : '1', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '1', 'TC' : '1', 'TG' : '0', 'TT' : '1' }
+dict_hd70 = {'AA': '1', 'AC' : '1', 'AG' : '1', 'AT' : '1', 'CA' : '1', 'CC' : '1', 'CG' : '1', 'CT' : '1', 'GA' : '1', 'GC' : '1', 'GG' : '1', 'GT' : '1', 'TA' : '1', 'TC' : '1', 'TG' : '1', 'TT' : '0' }
+
 
 def calc_hydro_letter_by_code(two_letters, code):
     assert(len(two_letters) == 2)
@@ -74,7 +94,45 @@ def calc_hydro_letter_by_code(two_letters, code):
         left_chain_start_code = dict_hd85[two_letters]
     elif code == 'hd_86':
         left_chain_start_code = dict_hd86[two_letters]
+    elif code == 'hd_87':
+        left_chain_start_code = dict_hd87[two_letters]
+
+    elif code == 'hd_55':
+        left_chain_start_code = dict_hd55[two_letters]
+    elif code == 'hd_56':
+        left_chain_start_code = dict_hd56[two_letters]
+    elif code == 'hd_57':
+        left_chain_start_code = dict_hd57[two_letters]
+    elif code == 'hd_58':
+        left_chain_start_code = dict_hd58[two_letters]
+    elif code == 'hd_59':
+        left_chain_start_code = dict_hd59[two_letters]
+    elif code == 'hd_60':
+        left_chain_start_code = dict_hd60[two_letters]
+    elif code == 'hd_61':
+        left_chain_start_code = dict_hd61[two_letters]
+    elif code == 'hd_62':
+        left_chain_start_code = dict_hd62[two_letters]
+    elif code == 'hd_63':
+        left_chain_start_code = dict_hd63[two_letters]
+    elif code == 'hd_64':
+        left_chain_start_code = dict_hd64[two_letters]
+    elif code == 'hd_65':
+        left_chain_start_code = dict_hd65[two_letters]
+    elif code == 'hd_66':
+        left_chain_start_code = dict_hd66[two_letters]
+    elif code == 'hd_67':
+        left_chain_start_code = dict_hd67[two_letters]
+    elif code == 'hd_68':
+        left_chain_start_code = dict_hd68[two_letters]
+    elif code == 'hd_69':
+        left_chain_start_code = dict_hd69[two_letters]
+    elif code == 'hd_70':
+        left_chain_start_code = dict_hd70[two_letters]
+
+
     else:
+        print(code)
         assert(False)
 
     return left_chain_start_code

@@ -52,9 +52,21 @@ def parse():
     test_only = config['DEFAULT'].getboolean('test_only')
 
 
-    test_only = True
+    test_only = False
+    snp_table_file = 'salmon/salmon_80samples_3-interseq-freq-ancestral.txt'
+    output = 'salmon_hydro_hd87.tsv'
+    chr_filename = 'salmon/GCF_000233375.1_ICSASG_v2_genomic.fna'
+
     snp_table_file = 'Great_tit_PRJEB24964/great-tits-vcftools-freq-ancestral-2.txt'
-    output = 'Great_tit_hydro_test.tsv'
+    output = 'Great_tit_hydro_hd87.tsv'
+    chr_filename = 'Great_tit_PRJEB24964/GCF_001522545.3_Parus_major1.1_genomic.fna'
+
+
+    #snp_table_file = 'wild_rats/Charles-River-freq2.txt'
+    snp_table_file = 'wild_rats/Harlan-freq1.txt'
+    output = 'Harlan_hydro.tsv'
+    chr_filename = 'wild_rats/GCA_000001895.4_Rnor_6.0_genomic.fna'
+
 
     pd_header = pd.read_csv(snp_table_file, sep='\t', header=0, nrows=3)
 
@@ -66,7 +78,6 @@ def parse():
     test_amount_seqs = 140
 
     chrom_dir = '.'
-    chr_filename = 'Great_tit_PRJEB24964/GCF_001522545.3_Parus_major1.1_genomic.fna'
 
     full_filename = os.path.join(chrom_dir, chr_filename)
 
@@ -75,12 +86,17 @@ def parse():
 
     fasta_seqs = SeqIO.parse(open(full_filename), 'fasta')
 
+    #use it to switch between great tit and salmon for example
+    use_chrom_word = True
 
     for fasta in fasta_seqs:
         name, sequence = fasta.description, str(fasta.seq)
         sequence = sequence.upper()
 
         print(name)
+
+        if 'random' in name:
+            continue
 
         name = name.replace(',', '')
         words = name.split(' ')
@@ -89,7 +105,10 @@ def parse():
         found = False
         for i in range(0, len(words)):
             if(words[i] == 'chromosome'):
-                cur_chr = words[i + 1]
+                if use_chrom_word:
+                    cur_chr = words[i + 1]
+                else:
+                    cur_chr = words[0]
                 found = True
                 break
 
@@ -172,17 +191,19 @@ def parse():
 
             if not (allele_1 == nucl or allele_2 == nucl):
                 print(allele_1, allele_2, nucl, pos)
-            #    print(total_miss)
-            #    total_miss = total_miss + 1
-            #                continue
+                df_part.at[index, 'remove'] = True
+
+                print(total_miss)
+                total_miss = total_miss + 1
+                continue
 
             assert (allele_1 == nucl or allele_2 == nucl )
 
             R1, Y1 = purine_utils.calc_RY(sequence, pos-1, allele_1)
             R2, Y2 = purine_utils.calc_RY(sequence, pos-1, allele_2)
 
-            km1, seq1, seq1_h = hydro_utils.calc_hydro(sequence, pos-1, allele_1)
-            km2, seq2, seq2_h = hydro_utils.calc_hydro(sequence, pos-1, allele_2)
+            km1, seq1, seq1_h = hydro_utils.calc_hydro_by_code(sequence, pos-1, allele_1, 'hd_07')
+            km2, seq2, seq2_h = hydro_utils.calc_hydro_by_code(sequence, pos-1, allele_2, 'hd_07')
 
             df_part.at[index, 'r1_len'] = R1
             df_part.at[index, 'y1_len'] = Y1
