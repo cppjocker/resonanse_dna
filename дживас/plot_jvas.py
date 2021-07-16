@@ -2,6 +2,74 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+def caseAT():
+    #fields = ['other_allele', 'effect_allele', 'effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #Howard
+    # fields = ['hm_effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #deLang
+    fields = ['A1', 'A2', 'EAF_A1',   'arm_AT'] #Karlsson
+    # fields = ['effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #Wojcik
+    # fields = ['hm_effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #Fereira
+    #fields = ['A1', 'A2', 'freq2',  'm1', 'm2', 'p1', 'p2'] #freq2, GreatTit
+
+    df = pd.read_csv('Karlsson_hydro_07.tsv', usecols=fields, sep='\t', header=0)
+    df = df.loc[ df['arm_AT'] >= 0, :]
+
+    filters = [ ['A', 'G'], ['A','C'], ['A', 'T'] ]
+
+    #filters = [['A', 'G', 'C', 'T']]
+    print(df.head)
+
+    points = np.arange(0.5, 1.01, 0.05)
+    bins = [0.5 * (points[i] + points[i + 1]) for i in range(0, len(points) - 1)]
+    df_out = pd.DataFrame( {'bins' : bins} )
+
+    for filter in filters:
+
+        counts_AT = np.zeros( len(bins) )
+        sum_lens_AT = np.zeros( len(bins) )
+
+
+        for k in range(0, df.shape[0]):
+            a1 = df.iloc[k, 0]
+            a2 = df.iloc[k, 1]
+
+            freq2 = df.iloc[k, 2]
+            freq1 = 1 - freq2
+
+            arm_len = df.iloc[k, 3]
+
+
+            if (a1 not in filter) or (a2 not in filter):
+                continue
+
+            if freq1 > freq2:
+                freq = freq1
+            else:
+                freq = freq2
+
+            for i in range(0, len(bins) ):
+                if( points[i] <= freq  and freq < points[i + 1] ):
+                    counts_AT[i] += 1
+                    sum_lens_AT[i] += arm_len
+
+
+
+        sum_lens_AT = [ sum_lens_AT[i] / counts_AT[i] for i in range(0, len(bins))]
+
+
+        plt.plot(bins, sum_lens_AT)
+        plt.xlabel('frquency bin')
+        plt.ylabel('mean diff len')
+        plt.title('purine. SNP: {0}->{1}'.format(filter[0], filter[1]))
+        plt.savefig('Karlsson_arm_evolution_SNP_{}.png'.format(filter[0] + filter[1]), dpi=600, bbox_inches='tight')
+        plt.close()
+
+        cur_df = pd.DataFrame({'{}_arm_AT'.format(filter[0] + filter[1]) : sum_lens_AT})
+        df_out = pd.concat([df_out, cur_df], axis=1)
+
+    df_out.to_csv('evolution_arm_Karlsson.tsv', sep='\t', index=False)
+
+
+
 def case1():
     #fields = ['other_allele', 'effect_allele', 'effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #Howard
     # fields = ['hm_effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #deLang
@@ -349,7 +417,7 @@ def caseW():
 if __name__ == '__main__':
     #caseW()
     #case1()
-    case2()
+    #case2()
     #case3()
-
+    caseAT()
 

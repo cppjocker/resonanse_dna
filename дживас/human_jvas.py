@@ -9,6 +9,7 @@ import gc
 
 import purine_utils
 import hydro_utils
+import seq_utils
 
 from argparse import ArgumentParser
 
@@ -140,6 +141,9 @@ def parse():
         df_part['minA_p'] = 0
         df_part['maxA_p'] = 0
 
+        df_part['arm_AT'] = -1
+
+
         if test_only:
             df_part['seq1'] = ''
             df_part['seq2'] = ''
@@ -205,8 +209,13 @@ def parse():
             R1, Y1 = purine_utils.calc_RY(sequence, pos - 1, allele_1)
             R2, Y2 = purine_utils.calc_RY(sequence, pos - 1, allele_2)
 
-            km1, seq1, seq1_h = hydro_utils.calc_hydro_by_code(sequence, pos - 1, allele_1, code='hd_87')
-            km2, seq2, seq2_h = hydro_utils.calc_hydro_by_code(sequence, pos - 1, allele_2, code='hd_87')
+            km1, seq1, seq1_h = hydro_utils.calc_hydro_by_code(sequence, pos - 1, allele_1, code='hd_07')
+            km2, seq2, seq2_h = hydro_utils.calc_hydro_by_code(sequence, pos - 1, allele_2, code='hd_07')
+
+            arm_AT1 = seq_utils.calc_AT_metric(sequence, pos - 1, allele_1)
+            arm_AT2 = seq_utils.calc_AT_metric(sequence, pos - 1, allele_2)
+
+            arm_AT = max(arm_AT1, arm_AT2)
 
             df_part.at[index, 'r1_len'] = R1
             df_part.at[index, 'y1_len'] = Y1
@@ -220,6 +229,8 @@ def parse():
 
             df_part.at[index, 'p1'] = km1
             df_part.at[index, 'p2'] = km2
+
+            df_part.at[index, 'arm_AT'] = arm_AT
 
             if freq_eff < 0.5:
                 df_part.at[index, 'minA_freq'] = freq_eff

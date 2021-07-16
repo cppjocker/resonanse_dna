@@ -14,14 +14,16 @@ import re
 
 from argparse import ArgumentParser
 
+code_list = ['hd_07', 'hd_55', 'hd_56', 'hd_57', 'hd_58', 'hd_59', 'hd_60', 'hd_61', 'hd_62', 'hd_63', 'hd_64', 'hd_65',
+             'hd_66', 'hd_67', 'hd_68', 'hd_69', 'hd_70']
+
+
 class ColumnsSnp:
     id = ''
     chrom = ''
     pos = ''
     other = ''
     effect = ''
-    a1_freq = ''
-    a2_freq = ''
 
 columns = ColumnsSnp()
 
@@ -55,28 +57,20 @@ def parse():
 
 
     test_only = False
-    snp_table_file = 'salmon/salmon_80samples_3-interseq-freq-ancestral.txt'
-    output = 'salmon_hydro_hd87.tsv'
-    chr_filename = 'salmon/GCF_000233375.1_ICSASG_v2_genomic.fna'
+    # snp_table_file = 'salmon/salmon_80samples_3-interseq-freq-ancestral.txt'
+    # output = 'salmon_hydro_55-70.tsv'
+    # chr_filename = 'salmon/GCF_000233375.1_ICSASG_v2_genomic.fna'
 
     snp_table_file = 'Great_tit_PRJEB24964/great-tits-vcftools-freq-ancestral-2.txt'
-    output = 'Great_tit_hydro_hd87.tsv'
+    output = 'Great_tit_hydro_55-70.tsv'
     chr_filename = 'Great_tit_PRJEB24964/GCF_001522545.3_Parus_major1.1_genomic.fna'
 
 
     #snp_table_file = 'wild_rats/Charles-River-freq2.txt'
-    snp_table_file = 'mouse_PMC5020872/Mmc_CAST_freq-ancestral2.txt'
-    output = 'mouse_PMC5020872_hydro.tsv'
-    chr_filename = 'mouse_PMC5020872/genome.fa'
-
     # snp_table_file = 'wild_rats/Harlan-freq1.txt'
     # output = 'Harlan_hydro.tsv'
     # chr_filename = 'wild_rats/GCA_000001895.4_Rnor_6.0_genomic.fna'
 
-
-    #snp_table_file = 'bos_taurus/bos_taurus.tsv'
-    #output = 'bos_taurus_hydro.tsv'
-    #chr_filename = 'bos_taurus/bosTau6.fa'
 
     pd_header = pd.read_csv(snp_table_file, sep='\t', header=0, nrows=3)
 
@@ -97,6 +91,7 @@ def parse():
     fasta_seqs = SeqIO.parse(open(full_filename), 'fasta')
 
     #use it to switch between great tit and salmon for example
+    # True -> GreatTit. False->Salmon
     use_chrom_word = True
 
     for fasta in fasta_seqs:
@@ -111,21 +106,16 @@ def parse():
         name = name.replace(',', '')
         words = name.split(' ')
 
-        found = False
 
-        #bos_taurus
-        if (len(name) > 3) and (name[0:3] == 'chr'):
-            cur_chr = name[3:]
-            found = True
-        else:
-            for i in range(0, len(words)):
-                if(words[i] == 'chromosome'):
-                    if use_chrom_word:
-                        cur_chr = words[i + 1]
-                    else:
-                        cur_chr = words[0]
-                    found = True
-                    break
+        found = False
+        for i in range(0, len(words)):
+            if(words[i] == 'chromosome'):
+                if use_chrom_word:
+                    cur_chr = words[i + 1]
+                else:
+                    cur_chr = words[0]
+                found = True
+                break
 
         if not found:
             print('NOT FOUND!')
@@ -137,26 +127,10 @@ def parse():
                               dtype={columns.chrom: str})
 
         df_part = pd.DataFrame(columns=pd_header.columns)
-
         columns.pos = 'POS'
         columns.chrom = 'CHROM'
         columns.other = 'A1'
         columns.effect = 'A2'
-        columns.a1_freq = 'A1FREQ'
-        columns.a2_freq = 'A2Freq'
-
-        if 'REF_base' in pd_header.columns:
-            columns.other = 'REF_base'
-        if 'ALT_allele' in pd_header.columns:
-            columns.effect = 'ALT_allele'
-
-        if 'ALLELE_FREQ' in pd_header.columns:
-            columns.a1_freq = 'ALLELE_FREQ'
-            columns.a2_freq = 'ALLELE_FREQ'
-
-        if 'FREQ2' in pd_header.columns:
-            columns.a1_freq = 'FREQ1'
-            columns.a2_freq = 'FREQ2'
 
 
         for df_chunk in df_iter:
@@ -171,39 +145,15 @@ def parse():
         if( df_part.shape[0] == 0):
             continue
 
-        df_part['freq1'] = df_part[columns.a1_freq]
-        df_part['freq2'] = df_part[columns.a2_freq]
+        for code in code_list:
+            df_part[code] = ''
+            if test_only:
+                df_part[code + "_seq1"] = ''
+                df_part[code + "_seq2"] = ''
 
-
-        df_part['r1_len'] = 0
-        df_part['r2_len'] = 0
-
-        df_part['y1_len'] = 0
-        df_part['y2_len'] = 0
-
-        df_part['m1'] = 0
-        df_part['m2'] = 0
-
-        df_part['p1'] = 0
-        df_part['p2'] = 0
-
-        df_part['minA_freq'] = 0.0
-        df_part['maxA_freq'] = 0.0
-
-
-        df_part['minA_r_len'] = 0
-        df_part['maxA_r_len'] = 0
-
-        df_part['minA_y_len'] = 0
-        df_part['maxA_y_len'] = 0
-
-        df_part['minA_m'] = 0
-        df_part['maxA_m'] = 0
-
-        df_part['minA_p'] = 0
-        df_part['maxA_p'] = 0
-
+        df_part['purine'] = ''
         df_part['remove'] = False
+
 
 
         for index, row in df_part.iterrows():
@@ -233,65 +183,28 @@ def parse():
             R1, Y1 = purine_utils.calc_RY(sequence, pos-1, allele_1)
             R2, Y2 = purine_utils.calc_RY(sequence, pos-1, allele_2)
 
-            km1, seq1, seq1_h = hydro_utils.calc_hydro_by_code(sequence, pos-1, allele_1, 'hd_07')
-            km2, seq2, seq2_h = hydro_utils.calc_hydro_by_code(sequence, pos-1, allele_2, 'hd_07')
+            m1 = max(R1, Y1)
+            m2 = max(R2, Y2)
 
-            df_part.at[index, 'r1_len'] = R1
-            df_part.at[index, 'y1_len'] = Y1
+            df_part.at[index, 'purine'] = '{0};{1}'.format(m1, m2)
 
-            df_part.at[index, 'm1'] = max(R1, Y1)
+            for code in code_list:
+                km1, seq1, seq1_h = hydro_utils.calc_hydro_by_code(sequence, pos - 1, allele_1, code)
+                km2, seq2, seq2_h = hydro_utils.calc_hydro_by_code(sequence, pos - 1, allele_2, code)
 
-            df_part.at[index, 'r2_len'] = R2
-            df_part.at[index, 'y2_len'] = Y2
+                df_part.at[index, code] = '{0};{1}'.format(km1, km2)
 
-            df_part.at[index, 'm2'] = max(R2, Y2)
+                if test_only:
+                    df_part.at[index, 'seq1'] = seq1
+                    df_part.at[index, 'seq2'] = seq2
 
-            df_part.at[index, 'p1'] = km1
-            df_part.at[index, 'p2'] = km2
-
-            if row['freq1'] > row['freq2']:
-                df_part.at[index, 'minA_freq'] = row['freq2']
-                df_part.at[index, 'maxA_freq'] = row['freq1']
-
-                df_part.at[index, 'maxA_r_len'] = R1
-                df_part.at[index, 'maxA_y_len'] = Y1
-
-                df_part.at[index, 'maxA_m'] = max(R1, Y1)
-
-                df_part.at[index, 'minA_r_len'] = R2
-                df_part.at[index, 'minA_y_len'] = Y2
-
-                df_part.at[index, 'minA_m'] = max(R2, Y2)
-
-                df_part.at[index, 'maxA_p'] = km1
-                df_part.at[index, 'minA_p'] = km2
-            else:
-                df_part.at[index, 'minA_freq'] = row['freq1']
-                df_part.at[index, 'maxA_freq'] = row['freq2']
-
-                df_part.at[index, 'maxA_r_len'] = R2
-                df_part.at[index, 'maxA_y_len'] = Y2
-
-                df_part.at[index, 'maxA_m'] = max(R2, Y2)
-
-                df_part.at[index, 'minA_r_len'] = R1
-                df_part.at[index, 'minA_y_len'] = Y1
-
-                df_part.at[index, 'minA_m'] = max(R1, Y1)
-
-                df_part.at[index, 'maxA_p'] = km2
-                df_part.at[index, 'minA_p'] = km1
+                    df_part.at[index, code + "_seq1"] = seq1_h
+                    df_part.at[index, code + "_seq2"] = seq2_h
 
 
             total_num = total_num + 1
 
             if test_only:
-                df_part.at[index, 'seq1'] = seq1
-                df_part.at[index, 'seq2'] = seq2
-
-                df_part.at[index, 'seq1_h'] = seq1_h
-                df_part.at[index, 'seq2_h'] = seq2_h
-
                 if total_num >= test_amount_seqs:
                     df_part = df_part.iloc[0:test_amount_seqs]
                     break

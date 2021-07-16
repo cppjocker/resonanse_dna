@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 if __name__ == '__main__':
     # fields = ['effect_allele_frequency'] #Howard
     # fields = ['hm_effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #deLang
-    fields = ['EAF_A1'] #Karlsson
+    #fields = ['EAF_A1'] #Karlsson
+    fields = ['A2Freq']  # salmon
     # fields = ['effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #Wojcik
     # fields = ['hm_effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #Fereira
     # fields = ['freq2',  'm1', 'm2', 'p1', 'p2'] #freq2
@@ -18,7 +19,7 @@ if __name__ == '__main__':
     fields += code_list
     fields += ['purine']
 
-    df = pd.read_csv('Karlsson_new_many_hydro.tsv', usecols=fields, sep='\t', header=0)
+    df = pd.read_csv('Great_tit_hydro_55-70.tsv', usecols=fields, sep='\t', header=0)
 
 
 #    print(df.head)
@@ -115,7 +116,7 @@ if __name__ == '__main__':
         plt.xlabel('frequency bin')
         plt.ylabel('mean diff len')
         plt.title('Purine. Range {}-{}'.format(range_s, range_e))
-        plt.savefig('Karlsson_new_many_purine_evolution_{}-{}.png'.format(range_s, range_e), dpi=600, bbox_inches='tight')
+        plt.savefig('Great_Tit_new_many_purine_evolution_{}-{}.png'.format(range_s, range_e), dpi=600, bbox_inches='tight')
         plt.close()
 
         markers = ['*', '^', 'o', '+', 'v']
@@ -139,9 +140,9 @@ if __name__ == '__main__':
         plt.xlabel('frequency bin')
         plt.ylabel('mean diff len')
         plt.title('Hydro. Range {}-{}'.format(range_s, range_e))
-        plt.savefig('Karlsson_hydro_new_many_evolution_{}-{}.png'.format(range_s, range_e), dpi=600, bbox_inches='tight')
+        plt.savefig('Great_Tit_hydro_new_many_evolution_{}-{}.png'.format(range_s, range_e), dpi=600, bbox_inches='tight')
         plt.close()
 
 
 
-    df_out.to_csv('Karlsson_new_many_hydro_evolution_binned.tsv', sep='\t', index=False)
+    df_out.to_csv('Great_Tit_new_many_hydro_evolution_binned.tsv', sep='\t', index=False)
