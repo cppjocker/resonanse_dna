@@ -13,6 +13,8 @@ import seq_utils
 
 from argparse import ArgumentParser
 
+shoulder_codes = ['AA', 'AC', 'AG', 'AT', 'CC', 'CG', 'CT', 'GG', 'GT', 'TT']
+
 
 class ColumnsSnp:
     id = ''
@@ -93,6 +95,8 @@ def parse():
     total_num = 0
     total_chr = 0
 
+    write_shoulders = True
+
     test_amount_seqs = 140
 
     for cur_chr in all_chr:
@@ -141,8 +145,14 @@ def parse():
         df_part['minA_p'] = 0
         df_part['maxA_p'] = 0
 
-        df_part['arm_AT'] = -1
+        # df_part['arm_AT_l'] = -1
+        # df_part['arm_AT_r'] = -1
+        # df_part['arm_AT'] = -1
 
+        if write_shoulders:
+            for code in shoulder_codes:
+                df_part[code + '_shoulder_l'] = -1
+                df_part[code + '_shoulder_r'] = -1
 
         if test_only:
             df_part['seq1'] = ''
@@ -212,10 +222,20 @@ def parse():
             km1, seq1, seq1_h = hydro_utils.calc_hydro_by_code(sequence, pos - 1, allele_1, code='hd_07')
             km2, seq2, seq2_h = hydro_utils.calc_hydro_by_code(sequence, pos - 1, allele_2, code='hd_07')
 
-            arm_AT1 = seq_utils.calc_AT_metric(sequence, pos - 1, allele_1)
-            arm_AT2 = seq_utils.calc_AT_metric(sequence, pos - 1, allele_2)
+            if write_shoulders:
+                for code in shoulder_codes:
 
-            arm_AT = max(arm_AT1, arm_AT2)
+                    shouder1_l, shouder1_r, arm_AT1 = seq_utils.calc_shoulder_metric(sequence, pos - 1, allele_1, code = code)
+                    shouder2_l, shouder2_r, arm_AT2 = seq_utils.calc_shoulder_metric(sequence, pos - 1, allele_2, code = code)
+
+                    if arm_AT1 > arm_AT2:
+                        df_part.at[index, code + '_shoulder_l'] = shouder1_l
+                        df_part.at[index, code + '_shoulder_r'] = shouder1_r
+                    else:
+                        df_part.at[index, code + '_shoulder_l'] = shouder2_l
+                        df_part.at[index, code + '_shoulder_r'] = shouder2_r
+
+
 
             df_part.at[index, 'r1_len'] = R1
             df_part.at[index, 'y1_len'] = Y1
@@ -230,7 +250,8 @@ def parse():
             df_part.at[index, 'p1'] = km1
             df_part.at[index, 'p2'] = km2
 
-            df_part.at[index, 'arm_AT'] = arm_AT
+
+
 
             if freq_eff < 0.5:
                 df_part.at[index, 'minA_freq'] = freq_eff

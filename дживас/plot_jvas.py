@@ -1,72 +1,136 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+
 
 def caseAT():
-    #fields = ['other_allele', 'effect_allele', 'effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #Howard
-    # fields = ['hm_effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #deLang
-    fields = ['A1', 'A2', 'EAF_A1',   'arm_AT'] #Karlsson
+    shoulder_codes = ['AA', 'AC', 'AG', 'AT', 'CC', 'CG', 'CT', 'GG', 'GT', 'TT']
+
+    #fields = ['other_allele', 'effect_allele', 'effect_allele_frequency',  'arm_AT', 'arm_AT_l', 'arm_AT_r'] #Howard
+    #fields = ['hm_effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #deLang
     # fields = ['effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #Wojcik
     # fields = ['hm_effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #Fereira
-    #fields = ['A1', 'A2', 'freq2',  'm1', 'm2', 'p1', 'p2'] #freq2, GreatTit
 
-    df = pd.read_csv('Karlsson_hydro_07.tsv', usecols=fields, sep='\t', header=0)
-    df = df.loc[ df['arm_AT'] >= 0, :]
+    #fields = ['A1', 'A2', 'freq2'] #freq2, GreatTit
 
-    filters = [ ['A', 'G'], ['A','C'], ['A', 'T'] ]
+    n_bins = 10
 
-    #filters = [['A', 'G', 'C', 'T']]
-    print(df.head)
+    out_df = pd.DataFrame( {'number_bin' : np.arange(10) })
+    filter_gen = 'CDS'
 
-    points = np.arange(0.5, 1.01, 0.05)
-    bins = [0.5 * (points[i] + points[i + 1]) for i in range(0, len(points) - 1)]
-    df_out = pd.DataFrame( {'bins' : bins} )
+    for code in shoulder_codes:
+        fields = ['A2', 'A1', 'EAF_A1']  # Karlsson
 
-    for filter in filters:
-
-        counts_AT = np.zeros( len(bins) )
-        sum_lens_AT = np.zeros( len(bins) )
+        sh_left = code + '_shoulder_l'
+        sh_right = code + '_shoulder_r'
+        fields.append(sh_left)
+        fields.append(sh_right)
+        fields.append('gen')
 
 
-        for k in range(0, df.shape[0]):
-            a1 = df.iloc[k, 0]
-            a2 = df.iloc[k, 1]
+        df = pd.read_csv('Karlsson_hydro_07_all_shoulders.tsv', usecols=fields, sep='\t', header=0)
+        df = df.reindex(columns=fields)
+        df = df.loc[ df.iloc[:, 3] >= 0, :]
+        df = df.loc[df.loc[:, 'gen'] == filter_gen]
 
-            freq2 = df.iloc[k, 2]
-            freq1 = 1 - freq2
+        main_letter = code[0]
+        filters = [ 'A', 'C', 'G', 'T' ]
+        filters.remove(main_letter)
 
-            arm_len = df.iloc[k, 3]
+        #filters = [['A', 'G', 'C', 'T']]
+        print(df.head)
+
+        overall_bins = []
+        overall_freqs = []
+        overall_names = []
+
+        for filter in filters:
+
+            df_filter = df.loc[ (df.iloc[:, 0] == filter) | (df.iloc[:, 1] == filter), :]
+
+            df_filter['arm_AT'] = 0.5 * ( df_filter[sh_left] + df_filter[sh_right] )
+            df_filter.sort_values(by=['arm_AT'], inplace=True)
+
+            bins = []
+            freqs = []
+            amount_in_bin = df_filter.shape[0] // n_bins
+
+            # all_freqs = [df_filter.iloc[x, 2] if df_filter.iloc[x, 1] == main_letter else 1 - df_filter.iloc[x, 2] for x in
+            #              range(0, df_filter.shape[0])]
+            #
+            # fig = plt.figure()
+            # ax = Axes3D(fig)
+            # surf = ax.plot_trisurf(df_filter.iloc[:, 3], df_filter.iloc[:, 4], all_freqs, cmap=cm.jet, linewidth=0.1)
+            # ax.set_xlabel('l1')
+            # ax.set_ylabel('l2')
+            # ax.set_zlabel('freq ' + main_letter)
+            #
+            # fig.colorbar(surf, shrink=0.5, aspect=5)
+            # ax.set_title('Average. Denucl: {0} SNP: {1}->{2}'.format(code, main_letter, filter))
+            # plt.savefig('Karlsson_3D_SNP_{}_{}_{}_Multic_AT2.png'.format(code, main_letter, filter), dpi=300)
+            #
+            # plt.close()
+            # #plt.pause(0)
 
 
-            if (a1 not in filter) or (a2 not in filter):
-                continue
+            for i in range(0, n_bins):
+                start_bin = (i * amount_in_bin)
+                end_bin = (i * amount_in_bin + amount_in_bin)
 
-            if freq1 > freq2:
-                freq = freq1
-            else:
-                freq = freq2
+                bin_center = np.median(df_filter.iloc[start_bin:end_bin, 5 ])
+                #bin_center = int( start_bin+ amount_in_bin / 2 )
 
-            for i in range(0, len(bins) ):
-                if( points[i] <= freq  and freq < points[i + 1] ):
-                    counts_AT[i] += 1
-                    sum_lens_AT[i] += arm_len
+                #bin_center = np.median( np.sqrt( df_filter.iloc[start_bin:end_bin, 3 ].values ) )
+
+                #bin_center = np.median( 0.5 * ( df_filter.iloc[start_bin:end_bin, 3 ].values + df_filter.iloc[start_bin:end_bin, 4 ].values ) )
 
 
+                cur_freqs = [ df_filter.iloc[x, 2]  if df_filter.iloc[x, 1] == main_letter else 1 - df_filter.iloc[x, 2] for x in range(start_bin, end_bin) ]
 
-        sum_lens_AT = [ sum_lens_AT[i] / counts_AT[i] for i in range(0, len(bins))]
+
+                bins.append(bin_center)
+                freqs.append(np.mean(cur_freqs) )
 
 
-        plt.plot(bins, sum_lens_AT)
-        plt.xlabel('frquency bin')
-        plt.ylabel('mean diff len')
-        plt.title('purine. SNP: {0}->{1}'.format(filter[0], filter[1]))
-        plt.savefig('Karlsson_arm_evolution_SNP_{}.png'.format(filter[0] + filter[1]), dpi=600, bbox_inches='tight')
+
+            # plt.plot(bins, freqs, '-o')
+            # plt.xlabel('Average shoulder')
+            # plt.ylabel('allele AT frequency')
+            # plt.title('Multic AT_2. SNP: {0}->{1}'.format(main_letter, filter))
+            # plt.savefig('Great_tit_arm_evolution_SNP_{}_Average.png'.format(main_letter + filter), dpi=600, bbox_inches='tight')
+            # plt.close()
+            #
+            # cur_df = pd.DataFrame({'bins' : bins, 'freqs' : freqs})
+            #
+            # cur_df.to_csv('evolution_arm_Great_tit_{}_Average.tsv'.format(main_letter + filter), sep='\t', index=False)
+
+            overall_bins.append(bins)
+            overall_freqs.append(freqs)
+            overall_names.append('{0}-{1}'.format(main_letter, filter))
+
+        for i in range( len(overall_freqs) ):
+            bins = overall_bins[i]
+            freqs =  overall_freqs[i]
+            names = overall_names[i]
+
+            plt.plot(bins, freqs, '-o', label = names)
+
+            cur_df = pd.DataFrame({'bin_denucl_{}_SNP_{}'.format(code, names) : bins, 'freq_denucl_{}_SNP_{}'.format(code, names): freqs})
+
+            out_df = pd.concat( [out_df, cur_df], axis=1)
+
+        plt.xlabel('Average shoulder')
+        plt.ylabel('allele {} frequency'.format(code))
+        plt.title('Denucl {}. All SNP'.format(code))
+        plt.legend(loc='best')
+        plt.savefig('Karlsson_arm_evolution_all_SNP_Average_Denucl_{}_gen_{}.png'.format(code, filter_gen), dpi=600, bbox_inches='tight')
         plt.close()
 
-        cur_df = pd.DataFrame({'{}_arm_AT'.format(filter[0] + filter[1]) : sum_lens_AT})
-        df_out = pd.concat([df_out, cur_df], axis=1)
+    out_df.to_csv('Karlsson_all_SNP_all_denucl_{}.tsv'.format(filter_gen), sep='\t', index=False)
 
-    df_out.to_csv('evolution_arm_Karlsson.tsv', sep='\t', index=False)
+
 
 
 

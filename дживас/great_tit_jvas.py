@@ -9,6 +9,7 @@ import gc
 
 import purine_utils
 import hydro_utils
+import seq_utils
 
 import re
 
@@ -56,18 +57,18 @@ def parse():
 
     test_only = False
     snp_table_file = 'salmon/salmon_80samples_3-interseq-freq-ancestral.txt'
-    output = 'salmon_hydro_hd87.tsv'
+    output = 'salmon_hydro_hd07.tsv'
     chr_filename = 'salmon/GCF_000233375.1_ICSASG_v2_genomic.fna'
 
     snp_table_file = 'Great_tit_PRJEB24964/great-tits-vcftools-freq-ancestral-2.txt'
-    output = 'Great_tit_hydro_hd87.tsv'
+    output = 'Great_tit_hydro_hd07.tsv'
     chr_filename = 'Great_tit_PRJEB24964/GCF_001522545.3_Parus_major1.1_genomic.fna'
 
 
     #snp_table_file = 'wild_rats/Charles-River-freq2.txt'
-    snp_table_file = 'mouse_PMC5020872/Mmc_CAST_freq-ancestral2.txt'
-    output = 'mouse_PMC5020872_hydro.tsv'
-    chr_filename = 'mouse_PMC5020872/genome.fa'
+    # snp_table_file = 'mouse_PMC5020872/Mmc_CAST_freq-ancestral2.txt'
+    # output = 'mouse_PMC5020872_hydro.tsv'
+    # chr_filename = 'mouse_PMC5020872/genome.fa'
 
     # snp_table_file = 'wild_rats/Harlan-freq1.txt'
     # output = 'Harlan_hydro.tsv'
@@ -96,7 +97,7 @@ def parse():
 
     fasta_seqs = SeqIO.parse(open(full_filename), 'fasta')
 
-    #use it to switch between great tit and salmon for example
+    #use it to switch between great tit and salmon for example. False = Salmon
     use_chrom_word = True
 
     for fasta in fasta_seqs:
@@ -203,6 +204,11 @@ def parse():
         df_part['minA_p'] = 0
         df_part['maxA_p'] = 0
 
+        df_part['arm_AT_l'] = -1
+        df_part['arm_AT_r'] = -1
+        df_part['arm_AT'] = -1
+
+
         df_part['remove'] = False
 
 
@@ -236,6 +242,10 @@ def parse():
             km1, seq1, seq1_h = hydro_utils.calc_hydro_by_code(sequence, pos-1, allele_1, 'hd_07')
             km2, seq2, seq2_h = hydro_utils.calc_hydro_by_code(sequence, pos-1, allele_2, 'hd_07')
 
+            arm_AT1_l, arm_AT1_r, arm_AT1 = seq_utils.calc_AT_metric(sequence, pos - 1, allele_1, code = 1)
+            arm_AT2_l, arm_AT2_r, arm_AT2 = seq_utils.calc_AT_metric(sequence, pos - 1, allele_2, code = 1)
+
+
             df_part.at[index, 'r1_len'] = R1
             df_part.at[index, 'y1_len'] = Y1
 
@@ -248,6 +258,16 @@ def parse():
 
             df_part.at[index, 'p1'] = km1
             df_part.at[index, 'p2'] = km2
+
+            if arm_AT1 > arm_AT2:
+                df_part.at[index, 'arm_AT'] = arm_AT1
+                df_part.at[index, 'arm_AT_l'] = arm_AT1_l
+                df_part.at[index, 'arm_AT_r'] = arm_AT1_r
+            else:
+                df_part.at[index, 'arm_AT'] = arm_AT2
+                df_part.at[index, 'arm_AT_l'] = arm_AT2_l
+                df_part.at[index, 'arm_AT_r'] = arm_AT2_r
+
 
             if row['freq1'] > row['freq2']:
                 df_part.at[index, 'minA_freq'] = row['freq2']
