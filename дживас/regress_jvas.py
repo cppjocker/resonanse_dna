@@ -398,10 +398,75 @@ def case5():
     all_diff_species.to_csv("Great_Tit_many_hydro_binned.tsv", sep='\t', index=False)
 
 
+def case6():
+    use_counts = True
+
+    inc = 2
+
+    df = pd.read_csv('Karlsson_all_SNP_all_denucl.tsv', sep='\t', header=0)
+    start_col = 1
+
+
+    angles = []
+    r2s = []
+    total_counts = []
+    h_columns = []
+
+    for i in range(start_col, df.shape[1], inc):
+        cur_column = df.columns[i]
+
+        X = df.iloc[:, i].values
+        X = X[:, None]
+        cur_h = df.iloc[:, i+1].values
+
+        if( any( np.isnan( cur_h  ) ) ):
+            continue
+
+
+        reg = LinearRegression()
+        reg .fit(X, cur_h)
+        y_pred = reg.predict(X)
+        r2 = r2_score(cur_h, y_pred)
+
+        slope = reg.coef_[0]
+
+        angle = (math.atan(slope)) / math.pi * 180
+        angles.append(angle)
+        r2s.append(r2 * 100)
+
+        h_columns.append(cur_column)
+
+        if(use_counts):
+            cur_counts = sum(df.iloc[:, i + 1].values)
+            total_counts.append(cur_counts)
+
+    angles1 = pd.DataFrame({'option' : h_columns, 'value' : angles, 'type' : ['angle'] * len(h_columns)})
+    angles2 = pd.DataFrame({'option' : h_columns, 'value' : r2s, 'type' : ['r2'] * len(h_columns)})
+    angles3 = pd.DataFrame({'option' : h_columns, 'value' : total_counts, 'type' : ['counts'] * len(h_columns)})
+
+    #angles = pd.concat([angles1, angles2, angles3], axis=0)
+    angles = pd.concat([angles1], axis=0)
+
+    ax = sns.barplot(x="option", y="value", data=angles, hue="type")
+
+    for item in ax.get_xticklabels():
+        item.set_rotation(45)
+
+    ax.set_xticklabels(ax.get_xticklabels(), fontsize=3)
+
+    plt.savefig("Karlson_shoulder_angles.png", bbox_inches = 'tight', dpi = 600)
+    plt.close()
+
+    angles.to_csv("Karlson_shoulder_angles.tsv", sep = '\t', index=False)
+
+
 
 if __name__ == '__main__':
+    print( math.atan(0.1 / 45)  / math.pi * 360)
+    exit(0)
     #case1()
     #case2()
     #case3()
     #case4()
-    case5()
+    #case5()
+    case6()
