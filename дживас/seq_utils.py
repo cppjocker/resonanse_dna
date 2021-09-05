@@ -48,7 +48,7 @@ def calc_AT_metric(seq, pos, nucl, code):
 
 def calc_shoulder_metric(seq, pos, nucl, code):
     if not ( nucl == code[0] and seq[pos + 1] == code[1] ):
-        return -1, -1, -1
+        return -1, -1, -1, False
 
     l1 = 0
     for walk_left in range(pos - 2, 0, -1):
@@ -62,5 +62,10 @@ def calc_shoulder_metric(seq, pos, nucl, code):
             l2 = (walk_right - 1) - (pos + 1)
             break
 
+    AT_in = False
 
-    return l1, l2, l1*l2
+    if "AT" in seq[walk_left:(walk_right + 1)]:
+        AT_in = True
+
+
+    return l1, l2, l1*l2, AT_in

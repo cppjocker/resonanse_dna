@@ -13,7 +13,7 @@ import seq_utils
 
 from argparse import ArgumentParser
 
-shoulder_codes = ['AA', 'AC', 'AG', 'AT', 'CC', 'CG', 'CT', 'GG', 'GT', 'TT']
+shoulder_codes = ['AA', 'AC', 'AG', 'AT', 'CA', 'CC', 'CG', 'GA', 'GC', 'TA']
 
 
 class ColumnsSnp:
@@ -153,6 +153,8 @@ def parse():
             for code in shoulder_codes:
                 df_part[code + '_shoulder_l'] = -1
                 df_part[code + '_shoulder_r'] = -1
+                df_part[code + '_AT_in'] = False
+
 
         if test_only:
             df_part['seq1'] = ''
@@ -225,15 +227,18 @@ def parse():
             if write_shoulders:
                 for code in shoulder_codes:
 
-                    shouder1_l, shouder1_r, arm_AT1 = seq_utils.calc_shoulder_metric(sequence, pos - 1, allele_1, code = code)
-                    shouder2_l, shouder2_r, arm_AT2 = seq_utils.calc_shoulder_metric(sequence, pos - 1, allele_2, code = code)
+                    shouder1_l, shouder1_r, arm_AT1, AT_in_1 = seq_utils.calc_shoulder_metric(sequence, pos - 1, allele_1, code = code)
+                    shouder2_l, shouder2_r, arm_AT2, AT_in_2 = seq_utils.calc_shoulder_metric(sequence, pos - 1, allele_2, code = code)
 
                     if arm_AT1 > arm_AT2:
                         df_part.at[index, code + '_shoulder_l'] = shouder1_l
                         df_part.at[index, code + '_shoulder_r'] = shouder1_r
+                        df_part.at[index, code + '_AT_in'] = AT_in_1
+
                     else:
                         df_part.at[index, code + '_shoulder_l'] = shouder2_l
                         df_part.at[index, code + '_shoulder_r'] = shouder2_r
+                        df_part.at[index, code + '_AT_in'] = AT_in_2
 
 
 
