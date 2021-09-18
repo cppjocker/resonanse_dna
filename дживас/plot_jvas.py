@@ -109,6 +109,7 @@ def case_AT_get():
 def case_purine_shoulder():
     shoulder_codes = ['AC', 'AT', 'GC', 'GT', 'CA', 'CG', 'TA', 'TG']
     shoulder_codes = ['AC', 'AT', 'GC', 'GT']
+    #shoulder_codes = ['ACGT']
 
     #fields = ['other_allele', 'effect_allele', 'effect_allele_frequency',  'arm_AT', 'arm_AT_l', 'arm_AT_r'] #Howard
     #fields = ['hm_effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #deLang
@@ -118,33 +119,40 @@ def case_purine_shoulder():
     #fields = ['A1', 'A2', 'freq2'] #freq2, GreatTit
 
     n_bins = 16
+    choose_bins = np.arange(n_bins)
 
-    out_df = pd.DataFrame( {'number_bin' : np.arange(n_bins) })
+    n_bins = 1000
+    choose_bins = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 60, 100, 150, 200, 1000]
+
+    out_df = pd.DataFrame( {'number_bin' : np.arange(len(choose_bins)) })
+
     filter_gen = 'igc_and_tro' #CDS, igc, tro
     start_cs = 0.0
     end_cs = 0.4
     cs_str = 'low'
 
+    fields = ['other_allele', 'effect_allele', 'effect_allele_frequency', 'r1_len', 'r2_len', 'y1_len',
+              'y2_len']  # Karlsson
+
+    fields.append('gen')
+    fields.append('cs')
+
+    df = pd.read_csv('Howard_hydro_hd07_gen_fixcodes.tsv', usecols=fields, sep='\t', header=0)
+    df = df.reindex(columns=fields)
+    df = df.loc[df.iloc[:, 3] >= 0, :]
+    df = df.loc[df.loc[:, 'gen'] != 'CDS']
+    df = df.loc[(df.loc[:, 'cs'] >= start_cs) & (df.loc[:, 'cs'] <= end_cs)]
+
     for code in shoulder_codes:
-        fields = ['other_allele', 'effect_allele', 'effect_allele_frequency', 'r1_len', 'r2_len', 'y1_len', 'y2_len']  # Karlsson
-
-        fields.append('gen')
-        fields.append('cs')
-
-
-        df = pd.read_csv('Howard_hydro_hd07_gen_fixcodes.tsv', usecols=fields, sep='\t', header=0)
-        df = df.reindex(columns=fields)
-        df = df.loc[ df.iloc[:, 3] >= 0, :]
-        df = df.loc[df.loc[:, 'gen'] != 'CDS']
-        df = df.loc[ (df.loc[:, 'cs'] >= start_cs) & (df.loc[:, 'cs'] <= end_cs)]
 
         #df = df.astype({code + '_AT_in': bool})
 
-        main_letter = code[0]
-        filters = [ 'A', 'C', 'G', 'T' ]
-        filters.remove(main_letter)
 
+#        df_pred = [ ( (df.iloc[i, 0] in ['A', 'G']) and (df.iloc[i, 1] in ['C', 'T']) ) or
+#                           ( (df.iloc[i, 1] in ['A', 'G']) and (df.iloc[i, 0] in ['C', 'T'])) for i in range(df.shape[0]) ]
+#        print( sum(df_pred) )
 
+#        df_filter = df.loc[df_pred, :]
 
         df_filter = df.loc[ ( (df.iloc[:, 0] == code[0]) & (df.iloc[:, 1] ==  code[1]) ) |
                             ( (df.iloc[:, 1] == code[0]) & (df.iloc[:, 0] ==  code[1])), :]
@@ -173,9 +181,36 @@ def case_purine_shoulder():
                 else:
                     return row['effect_allele_frequency']
 
+        def len_purine_common(row):
+            if (row['other_allele'] in ['A', 'G']) and (row['effect_allele'] in ['C', 'T']):
+                return max(row['r1_len'], row['y2_len'])
+            elif (row['other_allele'] in ['C', 'T']) and (row['effect_allele'] in ['A', 'G']):
+                return max(row['y1_len'], row['r2_len'])
+            else:
+                assert (False)
+
+        def freq_purine_common(row):
+            if (row['other_allele'] in ['A', 'G']) and (row['effect_allele'] in ['C', 'T']):
+                if row['r1_len'] > row['y2_len']:
+                    return 1 - row['effect_allele_frequency']
+                else:
+                    return row['effect_allele_frequency']
+            elif (row['other_allele'] in ['C', 'T']) and (row['effect_allele'] in ['A', 'G']):
+                if row['y1_len'] > row['r2_len']:
+                    return 1 - row['effect_allele_frequency']
+                else:
+                    return row['effect_allele_frequency']
+            else:
+                assert(False)
+
+
 
         df_filter['purine_len'] = df_filter.apply(lambda row : len_purine(row), axis = 1)
         df_filter['purine_freq'] = df_filter.apply(lambda row : freq_purine(row), axis = 1)
+
+        #df_filter['purine_len'] = df_filter.apply(lambda row : len_purine_common(row), axis = 1)
+        #df_filter['purine_freq'] = df_filter.apply(lambda row : freq_purine_common(row), axis = 1)
+
 
         df_filter.sort_values(by=['purine_len'], inplace=True)
 
@@ -183,17 +218,19 @@ def case_purine_shoulder():
         freqs = []
         amount_in_bin = df_filter.shape[0] // n_bins
 
-       # print(df_filter['purine_len'])
+        print(df_filter)
 
-        for i in range(0, n_bins):
+        #for i in range(0, n_bins):
+        for i in choose_bins:
+
             start_bin = (i * amount_in_bin)
             end_bin = (i * amount_in_bin + amount_in_bin)
 
 
             #bin_center = np.median(df_filter.iloc[start_bin:end_bin, 8 ])
             bin_center = i
-            #bin_center = int( start_bin+ amount_in_bin / 2 )
-            #bin_center = np.median( df_filter.iloc[ start_bin:end_bin, -2 ].values  )
+            bin_center = int( start_bin+ amount_in_bin / 2 )
+            bin_center = np.median( df_filter.iloc[ start_bin:end_bin, -2 ].values  )
             #bin_center = np.median( 0.5 * ( df_filter.iloc[start_bin:end_bin, 3 ].values + df_filter.iloc[start_bin:end_bin, 4 ].values ) )
 
             cur_freqs = df_filter.iloc[start_bin:end_bin, -1]
@@ -202,6 +239,9 @@ def case_purine_shoulder():
             freqs.append(np.mean(cur_freqs) )
 
         names = '{0}>{1}'.format(code[0], code[1])
+        #names = 'all'
+
+        plt.xscale('log')
 
         plt.plot(bins, freqs, '-o', label = names)
 
@@ -209,14 +249,14 @@ def case_purine_shoulder():
         out_df = pd.concat( [out_df, cur_df], axis=1)
 
     #plt.axvline(x=80000, c='r')
-    plt.xlabel('Shoulder bin')
+    plt.xlabel('Shoulder average')
     plt.ylabel('allele frequency')
     plt.title('Purine Evolution.  Gen {}. CS {:.2f}-{:.2f} '.format(filter_gen, start_cs, end_cs))
     plt.legend(loc='best')
-    plt.savefig('Howard_bins_purine_shoulder_evolution_average_gen_{}_cs_{}.png'.format( filter_gen, cs_str), dpi=600, bbox_inches='tight')
+    plt.savefig('Howard_average_purine_shoulder_evolution_average_gen_{}_cs_{}.png'.format( filter_gen, cs_str), dpi=600, bbox_inches='tight')
     plt.close()
 
-    out_df.to_csv('Howard_bins_purine_shoulder_CS_{}_gen_{}.tsv'.format(cs_str, filter_gen), sep='\t', index=False)
+    out_df.to_csv('Howard_average_purine_shoulder_all_CS_{}_gen_{}.tsv'.format(cs_str, filter_gen), sep='\t', index=False)
 
 
 
