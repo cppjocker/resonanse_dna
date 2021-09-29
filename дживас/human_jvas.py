@@ -99,6 +99,8 @@ def parse():
 
     test_amount_seqs = 140
 
+    shoulder_codes = pd.read_csv('main3.csv',  delimiter=',')
+
     for cur_chr in all_chr:
 
         print(cur_chr)
@@ -150,10 +152,10 @@ def parse():
         # df_part['arm_AT'] = -1
 
         if write_shoulders:
-            for code in shoulder_codes:
-                df_part[code + '_shoulder_l'] = -1
-                df_part[code + '_shoulder_r'] = -1
-                df_part[code + '_AT_in'] = False
+            df_part['shoulder_l'] = ''
+            df_part['shoulder_r'] = ''
+            df_part['code_id'] = ''
+
 
 
         if test_only:
@@ -224,21 +226,53 @@ def parse():
             km1, seq1, seq1_h = hydro_utils.calc_hydro_by_code(sequence, pos - 1, allele_1, code='hd_07')
             km2, seq2, seq2_h = hydro_utils.calc_hydro_by_code(sequence, pos - 1, allele_2, code='hd_07')
 
+
             if write_shoulders:
-                for code in shoulder_codes:
+                total1 = 0
+                total2 = 0
 
-                    shouder1_l, shouder1_r, arm_AT1, AT_in_1 = seq_utils.calc_shoulder_metric(sequence, pos - 1, allele_1, code = code)
-                    shouder2_l, shouder2_r, arm_AT2, AT_in_2 = seq_utils.calc_shoulder_metric(sequence, pos - 1, allele_2, code = code)
+                sloulder_l_all = ''
+                sloulder_r_all = ''
+                code_i_all = ''
 
-                    if arm_AT1 > arm_AT2:
-                        df_part.at[index, code + '_shoulder_l'] = shouder1_l
-                        df_part.at[index, code + '_shoulder_r'] = shouder1_r
-                        df_part.at[index, code + '_AT_in'] = AT_in_1
+                for code_i in range(shoulder_codes.shape[0]):
 
+                    first_dinucl = shoulder_codes.iloc[code_i, 0]
+                    second_dinucl = shoulder_codes.iloc[code_i, 1]
+                    break_dinucl = shoulder_codes.iloc[code_i, 2]
+                    snp_pos = shoulder_codes.iloc[code_i, 3]
+
+                    if (snp_pos == 1) and \
+                        ( ( allele_1 == first_dinucl[0] and allele_2  == second_dinucl[0] ) or \
+                          (allele_2 == first_dinucl[0] and allele_1 == second_dinucl[0]) ) and \
+                            (sequence[pos] == first_dinucl[1] ) and ((sequence[pos] == second_dinucl[1] )):
+
+                          shouder1_l, shouder1_r, arm_AT1 = seq_utils.calc_shoulder_metric(sequence, pos - 1, allele_1, code =  allele_1 + sequence[pos], break_code  = break_dinucl, case=1)
+
+                          total1 += 1
+                    elif (snp_pos == 2) and \
+                        ( ( allele_1 == first_dinucl[1] and allele_2  == second_dinucl[1] ) or \
+                          (allele_2 == first_dinucl[1] and allele_1 == second_dinucl[1]) ) and \
+                            (sequence[pos - 2] == first_dinucl[0] ) and ((sequence[pos - 2] == second_dinucl[0] )):
+
+                          shouder1_l, shouder1_r, arm_AT1 = seq_utils.calc_shoulder_metric(sequence, pos - 1, allele_1, code = sequence[pos - 2]  + allele_1,  break_code = break_dinucl, case=2)
+
+                          total2 += 1
                     else:
-                        df_part.at[index, code + '_shoulder_l'] = shouder2_l
-                        df_part.at[index, code + '_shoulder_r'] = shouder2_r
-                        df_part.at[index, code + '_AT_in'] = AT_in_2
+                        continue
+
+                    sloulder_l_all += '{0},'.format(shouder1_l)
+                    sloulder_r_all += '{0},'.format(shouder1_r)
+                    code_i_all += '{0},'.format(code_i)
+
+                if total1 + total2 > 0:
+                    sloulder_l_all = sloulder_l_all[:-1]
+                    sloulder_r_all = sloulder_r_all[:-1]
+                    code_i_all = code_i_all[:-1]
+
+                df_part.at[index, 'shoulder_l'] = sloulder_l_all
+                df_part.at[index, 'shoulder_r'] = sloulder_r_all
+                df_part.at[index, 'code_id'] = code_i_all
 
 
 
