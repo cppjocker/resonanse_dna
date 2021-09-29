@@ -106,6 +106,190 @@ def case_AT_get():
         idx_chr += 1
 
 
+def case_paired_shoulder_plot_helper():
+    shoulder_codes = pd.read_csv('main3.csv',  delimiter=',')
+    filter_gen = 'igc_and_tro' #CDS, igc, tro
+    start_cs = 0.0
+    end_cs = 0.4
+    cs_str = 'low'
+
+    for code_i in range(shoulder_codes.shape[0]):
+        df = pd.read_csv('{}-{}_Howard_bin_dinucl_Singleborder_evolution_code_{}_gen_{}_cs_{}.tsv'.format(shoulder_codes.iloc[code_i, 0], shoulder_codes.iloc[code_i, 1], code_i, cs_str, filter_gen), delimiter='\t')
+
+        names = '{0}>{1}({2}_border)'.format(shoulder_codes.iloc[code_i, 0], shoulder_codes.iloc[code_i, 1], shoulder_codes.iloc[code_i, 2])
+        #names = 'all'
+
+        #df = df.iloc[:, [0, 2 + code_i * 2]]
+        plt.plot(df.iloc[:, 0], df.iloc[:, 2], '-o', label = names)
+
+        if( (code_i % 6) == 5):
+            plt.xlabel('Shoulder bin')
+            plt.ylabel('allele frequency')
+            plt.title('Dinucl Evolution. {}  \n  Gen {}. CS {:.2f}-{:.2f} '.format(
+                shoulder_codes.iloc[code_i, 0],
+                filter_gen, start_cs, end_cs))
+            plt.legend(loc='best')
+
+            plt.savefig('{}_Howard_bin_dinucl_Singleboard_evolution_agg_gen_{}_cs_{}.png'.format(
+                shoulder_codes.iloc[code_i, 0], filter_gen, cs_str), dpi=600, bbox_inches='tight')
+
+            plt.close()
+
+        #df.to_csv('{}-{}_Howard_bin_dinucl_shoulder_evolution_code_{}_gen_{}_cs_{}.tsv'.format(shoulder_codes.iloc[code_i, 0], shoulder_codes.iloc[code_i, 1], code_i, cs_str, filter_gen), sep='\t', index=False)
+
+
+def case_paired_shoulder():
+    shoulder_codes = pd.read_csv('main3.csv',  delimiter=',')
+    shoulder_codes['AlFrDif'] = 0.0
+    shoulder_codes[ 'ShoLenDif'] = 0.0
+    shoulder_codes[ 'tangent'] = 0.0
+
+    print(shoulder_codes.columns)
+
+    #fields = ['other_allele', 'effect_allele', 'effect_allele_frequency',  'arm_AT', 'arm_AT_l', 'arm_AT_r'] #Howard
+    #fields = ['hm_effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #deLang
+    # fields = ['effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #Wojcik
+    # fields = ['hm_effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #Fereira
+
+    #fields = ['A1', 'A2', 'freq2'] #freq2, GreatTit
+
+    n_bins = 6
+    choose_bins = np.arange(n_bins)
+
+    #n_bins = 1000
+    #choose_bins = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 60, 100, 150, 200, 1000]
+
+
+    filter_gen = 'igc_and_tro' #CDS, igc, tro
+    start_cs = 0.0
+    end_cs = 0.4
+    cs_str = 'low'
+
+    fields = ['other_allele', 'effect_allele', 'effect_allele_frequency']  # Karlsson
+
+    fields.append('gen')
+    fields.append('cs')
+    fields.append('shoulder_l')
+    fields.append('shoulder_r')
+    fields.append('code_id')
+
+    df = pd.read_csv('Howard_hydro_hd07_gen_60_shoulders.tsv', usecols=fields, sep='\t', header=0)
+    df = df.reindex(columns=fields)
+
+    df = df.loc[df.loc[:, 'gen'] != 'CDS']
+    df = df.loc[(df.loc[:, 'cs'] >= start_cs) & (df.loc[:, 'cs'] <= end_cs)]
+
+    for code_i in range(shoulder_codes.shape[0]):
+        out_df = pd.DataFrame({'number_bin': np.arange(len(choose_bins))})
+
+        def filter_fn(row):
+            codes = row['code_id']
+            if codes != codes:
+                return False
+
+            codes_list = codes.split(',')
+
+            for code in codes_list:
+                if int(code) == code_i:
+                    return True
+
+            return False
+
+        def filter_fn2(row):
+            new_row = row.copy()
+
+            codes = row['code_id']
+            shoulders_l = row['shoulder_l']
+            shoulders_r = row['shoulder_r']
+
+
+            codes_list = codes.split(',')
+            shoulders_l_list = shoulders_l.split(',')
+            shoulders_r_list = shoulders_r.split(',')
+
+            for ii in range(len(codes_list)):
+                if int(codes_list[ii]) == code_i:
+                    new_row['code_id'] = int(codes_list[ii])
+                    new_row['shoulder_l'] = int(shoulders_l_list[ii])
+                    new_row['shoulder_r'] = int(shoulders_r_list[ii])
+
+            new_row['shoulder_len'] = (0 * new_row['shoulder_l'] + 2 * new_row['shoulder_r'] ) / 2
+
+            pos_change = shoulder_codes.iloc[code_i, 3] - 1
+            dinucl_1 = shoulder_codes.iloc[code_i, 0]
+            dinucl_2 = shoulder_codes.iloc[code_i, 1]
+
+            if dinucl_1[pos_change] == row['other_allele']:
+                new_row['allele_freq'] = 1 - new_row['effect_allele_frequency']
+                assert(dinucl_2[pos_change] == row['effect_allele'])
+            elif dinucl_2[pos_change] == row['other_allele']:
+                new_row['allele_freq'] = new_row['effect_allele_frequency']
+                assert(dinucl_1[pos_change] == row['effect_allele'])
+            else:
+                assert(False)
+
+
+            return new_row
+
+
+        #df = df.astype({code + '_AT_in': bool})
+
+        df_filter = df[ df.apply(filter_fn, axis = 1) ]
+        df_filter = df_filter.apply(filter_fn2, axis = 1)
+
+
+        df_filter.sort_values(by=['shoulder_len'], inplace=True)
+
+        bins = []
+        freqs = []
+        amount_in_bin = df_filter.shape[0] // n_bins
+
+#        print(df_filter)
+
+        #for i in range(0, n_bins):
+        for i in choose_bins:
+
+            start_bin = (i * amount_in_bin)
+            end_bin = (i * amount_in_bin + amount_in_bin)
+
+
+            #bin_center = np.median(df_filter.iloc[start_bin:end_bin, 8 ])
+            bin_center = i
+            #bin_center = int( start_bin+ amount_in_bin / 2 )
+            #bin_center = np.median( df_filter.iloc[ start_bin:end_bin, -2 ].values  )
+            #bin_center = np.median( 0.5 * ( df_filter.iloc[start_bin:end_bin, 3 ].values + df_filter.iloc[start_bin:end_bin, 4 ].values ) )
+
+            cur_freqs = df_filter.iloc[start_bin:end_bin, -1]
+
+            bins.append(bin_center)
+            freqs.append(np.mean(cur_freqs) )
+
+            last_shoulder = np.mean(df_filter.iloc[start_bin:end_bin, -2] )
+
+        names = '{0}>{1}({2}_border)'.format(shoulder_codes.iloc[code_i, 0], shoulder_codes.iloc[code_i, 1], shoulder_codes.iloc[code_i, 2])
+        #names = 'all'
+
+        plt.plot(bins, freqs, '-o', label = names)
+
+        cur_df = pd.DataFrame({'bin_dinucl_{0}>{1}({2}_border)'.format(shoulder_codes.iloc[code_i, 0], shoulder_codes.iloc[code_i, 1], shoulder_codes.iloc[code_i, 2]) : bins, 'freq_dinucl_{0}>{1}({2}_border)'.format(shoulder_codes.iloc[code_i, 0], shoulder_codes.iloc[code_i, 1], shoulder_codes.iloc[code_i, 2]): freqs})
+        out_df = pd.concat( [out_df, cur_df], axis=1)
+
+        #plt.axvline(x=80000, c='r')
+        plt.xlabel('Singleborder bin')
+        plt.ylabel('allele frequency')
+        plt.title('Dinucl Evolution. {}>{}({}_border) \n  Gen {}. CS {:.2f}-{:.2f} '.format(shoulder_codes.iloc[code_i, 0], shoulder_codes.iloc[code_i, 1], shoulder_codes.iloc[code_i, 2], filter_gen, start_cs, end_cs))
+        plt.legend(loc='best')
+        plt.savefig('{}-{}_Howard_bin_dinucl_Singleborder_evolution_code_{}_gen_{}_cs_{}.png'.format(shoulder_codes.iloc[code_i, 0], shoulder_codes.iloc[code_i, 1], code_i, filter_gen, cs_str), dpi=600, bbox_inches='tight')
+        plt.close()
+
+        out_df.to_csv('{}-{}_Howard_bin_dinucl_Singleborder_evolution_code_{}_gen_{}_cs_{}.tsv'.format(shoulder_codes.iloc[code_i, 0], shoulder_codes.iloc[code_i, 1], code_i, cs_str, filter_gen), sep='\t', index=False)
+
+        shoulder_codes.iloc[code_i, -3] = freqs[-1] - freqs[0]
+        shoulder_codes.iloc[code_i, -2] = last_shoulder
+        shoulder_codes.iloc[code_i, -1] = shoulder_codes.iloc[code_i, -3] / shoulder_codes.iloc[code_i, -2]
+
+    shoulder_codes.to_csv('Singleborder_codes_tangent.tsv', sep = '\t', index=False)
+
 def case_purine_shoulder():
     shoulder_codes = ['AC', 'AT', 'GC', 'GT', 'CA', 'CG', 'TA', 'TG']
     shoulder_codes = ['AC', 'AT', 'GC', 'GT']
@@ -752,6 +936,8 @@ if __name__ == '__main__':
     #case2()
     #case3()
     #caseAT()
-    case_purine_shoulder()
+    #case_purine_shoulder()
+    #case_paired_shoulder()
+    case_paired_shoulder_plot_helper()
     #case_AT_get()
 
