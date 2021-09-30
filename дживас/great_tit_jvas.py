@@ -57,12 +57,12 @@ def parse():
 
     test_only = False
     snp_table_file = 'salmon/salmon_80samples_3-interseq-freq-ancestral.txt'
-    output = 'salmon_hydro_hd07.tsv'
+    output = 'salmon_hydro_hd07_shoulder.tsv'
     chr_filename = 'salmon/GCF_000233375.1_ICSASG_v2_genomic.fna'
 
-    snp_table_file = 'Great_tit_PRJEB24964/great-tits-vcftools-freq-ancestral-2.txt'
-    output = 'Great_tit_hydro_hd07.tsv'
-    chr_filename = 'Great_tit_PRJEB24964/GCF_001522545.3_Parus_major1.1_genomic.fna'
+    # snp_table_file = 'Great_tit_PRJEB24964/great-tits-vcftools-freq-ancestral-2.txt'
+    # output = 'Great_tit_hydro_hd07_shoulders.tsv'
+    # chr_filename = 'Great_tit_PRJEB24964/GCF_001522545.3_Parus_major1.1_genomic.fna'
 
 
     #snp_table_file = 'wild_rats/Charles-River-freq2.txt'
@@ -88,6 +88,10 @@ def parse():
 
     test_amount_seqs = 140
 
+    write_shoulders = True
+    shoulder_codes = pd.read_csv('main3.csv',  delimiter=',')
+
+
     chrom_dir = '.'
 
     full_filename = os.path.join(chrom_dir, chr_filename)
@@ -98,7 +102,7 @@ def parse():
     fasta_seqs = SeqIO.parse(open(full_filename), 'fasta')
 
     #use it to switch between great tit and salmon for example. False = Salmon
-    use_chrom_word = True
+    use_chrom_word = False
 
     for fasta in fasta_seqs:
         name, sequence = fasta.description, str(fasta.seq)
@@ -204,12 +208,14 @@ def parse():
         df_part['minA_p'] = 0
         df_part['maxA_p'] = 0
 
-        df_part['arm_AT_l'] = -1
-        df_part['arm_AT_r'] = -1
-        df_part['arm_AT'] = -1
-
 
         df_part['remove'] = False
+
+        if write_shoulders:
+            df_part['shoulder_l'] = ''
+            df_part['shoulder_r'] = ''
+            df_part['code_id'] = ''
+
 
 
         for index, row in df_part.iterrows():
@@ -242,8 +248,58 @@ def parse():
             km1, seq1, seq1_h = hydro_utils.calc_hydro_by_code(sequence, pos-1, allele_1, 'hd_07')
             km2, seq2, seq2_h = hydro_utils.calc_hydro_by_code(sequence, pos-1, allele_2, 'hd_07')
 
-            arm_AT1_l, arm_AT1_r, arm_AT1 = seq_utils.calc_AT_metric(sequence, pos - 1, allele_1, code = 1)
-            arm_AT2_l, arm_AT2_r, arm_AT2 = seq_utils.calc_AT_metric(sequence, pos - 1, allele_2, code = 1)
+            if write_shoulders:
+                total1 = 0
+                total2 = 0
+
+                sloulder_l_all = ''
+                sloulder_r_all = ''
+                code_i_all = ''
+
+                for code_i in range(shoulder_codes.shape[0]):
+
+                    first_dinucl = shoulder_codes.iloc[code_i, 0]
+                    second_dinucl = shoulder_codes.iloc[code_i, 1]
+                    break_dinucl = shoulder_codes.iloc[code_i, 2]
+                    snp_pos = shoulder_codes.iloc[code_i, 3]
+
+                    if (snp_pos == 1) and \
+                            ((allele_1 == first_dinucl[0] and allele_2 == second_dinucl[0]) or \
+                             (allele_2 == first_dinucl[0] and allele_1 == second_dinucl[0])) and \
+                            (sequence[pos] == first_dinucl[1]) and ((sequence[pos] == second_dinucl[1])):
+
+                        shouder1_l, shouder1_r, arm_AT1 = seq_utils.calc_shoulder_metric(sequence, pos - 1, allele_1,
+                                                                                         code=allele_1 + sequence[pos],
+                                                                                         break_code=break_dinucl,
+                                                                                         case=1)
+
+                        total1 += 1
+                    elif (snp_pos == 2) and \
+                            ((allele_1 == first_dinucl[1] and allele_2 == second_dinucl[1]) or \
+                             (allele_2 == first_dinucl[1] and allele_1 == second_dinucl[1])) and \
+                            (sequence[pos - 2] == first_dinucl[0]) and ((sequence[pos - 2] == second_dinucl[0])):
+
+                        shouder1_l, shouder1_r, arm_AT1 = seq_utils.calc_shoulder_metric(sequence, pos - 1, allele_1,
+                                                                                         code=sequence[
+                                                                                                  pos - 2] + allele_1,
+                                                                                         break_code=break_dinucl,
+                                                                                         case=2)
+                        total2 += 1
+                    else:
+                        continue
+
+                    sloulder_l_all += '{0},'.format(shouder1_l)
+                    sloulder_r_all += '{0},'.format(shouder1_r)
+                    code_i_all += '{0},'.format(code_i)
+
+                if total1 + total2 > 0:
+                    sloulder_l_all = sloulder_l_all[:-1]
+                    sloulder_r_all = sloulder_r_all[:-1]
+                    code_i_all = code_i_all[:-1]
+
+                df_part.at[index, 'shoulder_l'] = sloulder_l_all
+                df_part.at[index, 'shoulder_r'] = sloulder_r_all
+                df_part.at[index, 'code_id'] = code_i_all
 
 
             df_part.at[index, 'r1_len'] = R1
@@ -258,16 +314,6 @@ def parse():
 
             df_part.at[index, 'p1'] = km1
             df_part.at[index, 'p2'] = km2
-
-            if arm_AT1 > arm_AT2:
-                df_part.at[index, 'arm_AT'] = arm_AT1
-                df_part.at[index, 'arm_AT_l'] = arm_AT1_l
-                df_part.at[index, 'arm_AT_r'] = arm_AT1_r
-            else:
-                df_part.at[index, 'arm_AT'] = arm_AT2
-                df_part.at[index, 'arm_AT_l'] = arm_AT2_l
-                df_part.at[index, 'arm_AT_r'] = arm_AT2_r
-
 
             if row['freq1'] > row['freq2']:
                 df_part.at[index, 'minA_freq'] = row['freq2']
