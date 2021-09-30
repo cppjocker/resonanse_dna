@@ -108,13 +108,13 @@ def case_AT_get():
 
 def case_paired_shoulder_plot_helper():
     shoulder_codes = pd.read_csv('main3.csv',  delimiter=',')
-    filter_gen = 'igc_and_tro' #CDS, igc, tro
+    filter_gen = 'all' #CDS, igc, tro
     start_cs = 0.0
-    end_cs = 0.4
-    cs_str = 'low'
+    end_cs = 1.0
+    cs_str = 'all'
 
     for code_i in range(shoulder_codes.shape[0]):
-        df = pd.read_csv('{}-{}_Howard_bin_dinucl_Singleborder_evolution_code_{}_gen_{}_cs_{}.tsv'.format(shoulder_codes.iloc[code_i, 0], shoulder_codes.iloc[code_i, 1], code_i, cs_str, filter_gen), delimiter='\t')
+        df = pd.read_csv('{}-{}_salmon_bin_dinucl_Singleborder_evolution_code_{}_gen_{}_cs_{}.tsv'.format(shoulder_codes.iloc[code_i, 0], shoulder_codes.iloc[code_i, 1], code_i, cs_str, filter_gen), delimiter='\t')
 
         names = '{0}>{1}({2}_border)'.format(shoulder_codes.iloc[code_i, 0], shoulder_codes.iloc[code_i, 1], shoulder_codes.iloc[code_i, 2])
         #names = 'all'
@@ -130,7 +130,7 @@ def case_paired_shoulder_plot_helper():
                 filter_gen, start_cs, end_cs))
             plt.legend(loc='best')
 
-            plt.savefig('{}_Howard_bin_dinucl_Singleboard_evolution_agg_gen_{}_cs_{}.png'.format(
+            plt.savefig('{}_salmon_bin_dinucl_Singleboard_evolution_agg_gen_{}_cs_{}.png'.format(
                 shoulder_codes.iloc[code_i, 0], filter_gen, cs_str), dpi=600, bbox_inches='tight')
 
             plt.close()
@@ -151,7 +151,6 @@ def case_paired_shoulder():
     # fields = ['effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #Wojcik
     # fields = ['hm_effect_allele_frequency',  'm1', 'm2', 'p1', 'p2'] #Fereira
 
-    #fields = ['A1', 'A2', 'freq2'] #freq2, GreatTit
 
     n_bins = 6
     choose_bins = np.arange(n_bins)
@@ -160,24 +159,27 @@ def case_paired_shoulder():
     #choose_bins = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 60, 100, 150, 200, 1000]
 
 
-    filter_gen = 'igc_and_tro' #CDS, igc, tro
+    filter_gen = 'all' #CDS, igc, tro
     start_cs = 0.0
-    end_cs = 0.4
-    cs_str = 'low'
+    end_cs = 1.0
+    cs_str = 'all'
 
-    fields = ['other_allele', 'effect_allele', 'effect_allele_frequency']  # Karlsson
+    #fields = ['other_allele', 'effect_allele', 'effect_allele_frequency']  # Karlsson
+    fields = ['A1', 'A2', 'freq2'] #freq2, GreatTit
 
-    fields.append('gen')
-    fields.append('cs')
+
+    #fields.append('gen')
+    #fields.append('cs')
+
     fields.append('shoulder_l')
     fields.append('shoulder_r')
     fields.append('code_id')
 
-    df = pd.read_csv('Howard_hydro_hd07_gen_60_shoulders.tsv', usecols=fields, sep='\t', header=0)
+    df = pd.read_csv('salmon_hydro_hd07_shoulder.tsv', usecols=fields, sep='\t', header=0)
     df = df.reindex(columns=fields)
 
-    df = df.loc[df.loc[:, 'gen'] != 'CDS']
-    df = df.loc[(df.loc[:, 'cs'] >= start_cs) & (df.loc[:, 'cs'] <= end_cs)]
+    #df = df.loc[df.loc[:, 'gen'] != 'CDS']
+    #df = df.loc[(df.loc[:, 'cs'] >= start_cs) & (df.loc[:, 'cs'] <= end_cs)]
 
     for code_i in range(shoulder_codes.shape[0]):
         out_df = pd.DataFrame({'number_bin': np.arange(len(choose_bins))})
@@ -213,18 +215,18 @@ def case_paired_shoulder():
                     new_row['shoulder_l'] = int(shoulders_l_list[ii])
                     new_row['shoulder_r'] = int(shoulders_r_list[ii])
 
-            new_row['shoulder_len'] = (0 * new_row['shoulder_l'] + 2 * new_row['shoulder_r'] ) / 2
+            new_row['shoulder_len'] = (new_row['shoulder_l'] +  new_row['shoulder_r'] ) / 2
 
             pos_change = shoulder_codes.iloc[code_i, 3] - 1
             dinucl_1 = shoulder_codes.iloc[code_i, 0]
             dinucl_2 = shoulder_codes.iloc[code_i, 1]
 
-            if dinucl_1[pos_change] == row['other_allele']:
-                new_row['allele_freq'] = 1 - new_row['effect_allele_frequency']
-                assert(dinucl_2[pos_change] == row['effect_allele'])
-            elif dinucl_2[pos_change] == row['other_allele']:
-                new_row['allele_freq'] = new_row['effect_allele_frequency']
-                assert(dinucl_1[pos_change] == row['effect_allele'])
+            if dinucl_1[pos_change] == row[0]:
+                new_row['allele_freq'] = 1 - new_row[2]
+                assert(dinucl_2[pos_change] == row[1])
+            elif dinucl_2[pos_change] == row[0]:
+                new_row['allele_freq'] = new_row[2]
+                assert(dinucl_1[pos_change] == row[1])
             else:
                 assert(False)
 
@@ -244,7 +246,7 @@ def case_paired_shoulder():
         freqs = []
         amount_in_bin = df_filter.shape[0] // n_bins
 
-#        print(df_filter)
+        #print(df_filter)
 
         #for i in range(0, n_bins):
         for i in choose_bins:
@@ -279,16 +281,16 @@ def case_paired_shoulder():
         plt.ylabel('allele frequency')
         plt.title('Dinucl Evolution. {}>{}({}_border) \n  Gen {}. CS {:.2f}-{:.2f} '.format(shoulder_codes.iloc[code_i, 0], shoulder_codes.iloc[code_i, 1], shoulder_codes.iloc[code_i, 2], filter_gen, start_cs, end_cs))
         plt.legend(loc='best')
-        plt.savefig('{}-{}_Howard_bin_dinucl_Singleborder_evolution_code_{}_gen_{}_cs_{}.png'.format(shoulder_codes.iloc[code_i, 0], shoulder_codes.iloc[code_i, 1], code_i, filter_gen, cs_str), dpi=600, bbox_inches='tight')
+        plt.savefig('{}-{}_salmon_bin_dinucl_Singleborder_evolution_code_{}_gen_{}_cs_{}.png'.format(shoulder_codes.iloc[code_i, 0], shoulder_codes.iloc[code_i, 1], code_i, filter_gen, cs_str), dpi=600, bbox_inches='tight')
         plt.close()
 
-        out_df.to_csv('{}-{}_Howard_bin_dinucl_Singleborder_evolution_code_{}_gen_{}_cs_{}.tsv'.format(shoulder_codes.iloc[code_i, 0], shoulder_codes.iloc[code_i, 1], code_i, cs_str, filter_gen), sep='\t', index=False)
+        out_df.to_csv('{}-{}_salmon_bin_dinucl_Singleborder_evolution_code_{}_gen_{}_cs_{}.tsv'.format(shoulder_codes.iloc[code_i, 0], shoulder_codes.iloc[code_i, 1], code_i, cs_str, filter_gen), sep='\t', index=False)
 
         shoulder_codes.iloc[code_i, -3] = freqs[-1] - freqs[0]
         shoulder_codes.iloc[code_i, -2] = last_shoulder
         shoulder_codes.iloc[code_i, -1] = shoulder_codes.iloc[code_i, -3] / shoulder_codes.iloc[code_i, -2]
 
-    shoulder_codes.to_csv('Singleborder_codes_tangent.tsv', sep = '\t', index=False)
+    shoulder_codes.to_csv('salmon_Singleborder_codes_tangent.tsv', sep = '\t', index=False)
 
 def case_purine_shoulder():
     shoulder_codes = ['AC', 'AT', 'GC', 'GT', 'CA', 'CG', 'TA', 'TG']
@@ -305,8 +307,8 @@ def case_purine_shoulder():
     n_bins = 16
     choose_bins = np.arange(n_bins)
 
-    n_bins = 1000
-    choose_bins = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 60, 100, 150, 200, 1000]
+    #n_bins = 1000
+    #choose_bins = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 60, 100, 150, 200, 1000]
 
     out_df = pd.DataFrame( {'number_bin' : np.arange(len(choose_bins)) })
 
@@ -317,6 +319,9 @@ def case_purine_shoulder():
 
     fields = ['other_allele', 'effect_allele', 'effect_allele_frequency', 'r1_len', 'r2_len', 'y1_len',
               'y2_len']  # Karlsson
+
+ #   fields = ['A1', 'A2', 'freq2', 'effect_allele_frequency', 'r1_len', 'r2_len', 'y1_len',
+ #             'y2_len']  # GreatTIt, salmon
 
     fields.append('gen')
     fields.append('cs')
@@ -343,47 +348,47 @@ def case_purine_shoulder():
 
         def len_purine(row):
             if code[0] in ['A', 'G']:
-                if row['other_allele'] in ['A', 'G']:
+                if row[0] in ['A', 'G']:
                     return row['r1_len']
                 else:
                     return row['r2_len']
             else:
-                if row['other_allele'] in ['C', 'T']:
+                if row[0] in ['C', 'T']:
                     return row['y1_len']
                 else:
                     return row['y2_len']
 
         def freq_purine(row):
             if code[0] in ['A', 'G']:
-                if row['other_allele'] in ['A', 'G']:
-                    return 1 - row['effect_allele_frequency']
+                if row[0] in ['A', 'G']:
+                    return 1 - row[2]
                 else:
-                    return row['effect_allele_frequency']
+                    return row[2]
             else:
-                if row['other_allele'] in ['C', 'T']:
-                    return 1 - row['effect_allele_frequency']
+                if row[0] in ['C', 'T']:
+                    return 1 - row[2]
                 else:
-                    return row['effect_allele_frequency']
+                    return row[2]
 
         def len_purine_common(row):
-            if (row['other_allele'] in ['A', 'G']) and (row['effect_allele'] in ['C', 'T']):
+            if (row[0] in ['A', 'G']) and (row[1] in ['C', 'T']):
                 return max(row['r1_len'], row['y2_len'])
-            elif (row['other_allele'] in ['C', 'T']) and (row['effect_allele'] in ['A', 'G']):
+            elif (row[0] in ['C', 'T']) and (row[1] in ['A', 'G']):
                 return max(row['y1_len'], row['r2_len'])
             else:
                 assert (False)
 
         def freq_purine_common(row):
-            if (row['other_allele'] in ['A', 'G']) and (row['effect_allele'] in ['C', 'T']):
+            if (row[0] in ['A', 'G']) and (row[1] in ['C', 'T']):
                 if row['r1_len'] > row['y2_len']:
-                    return 1 - row['effect_allele_frequency']
+                    return 1 - row[2]
                 else:
-                    return row['effect_allele_frequency']
-            elif (row['other_allele'] in ['C', 'T']) and (row['effect_allele'] in ['A', 'G']):
+                    return row[2]
+            elif (row[0] in ['C', 'T']) and (row[1] in ['A', 'G']):
                 if row['y1_len'] > row['r2_len']:
-                    return 1 - row['effect_allele_frequency']
+                    return 1 - row[2]
                 else:
-                    return row['effect_allele_frequency']
+                    return row[2]
             else:
                 assert(False)
 
@@ -425,7 +430,7 @@ def case_purine_shoulder():
         names = '{0}>{1}'.format(code[0], code[1])
         #names = 'all'
 
-        plt.xscale('log')
+        #plt.xscale('log')
 
         plt.plot(bins, freqs, '-o', label = names)
 
@@ -936,8 +941,8 @@ if __name__ == '__main__':
     #case2()
     #case3()
     #caseAT()
-    #case_purine_shoulder()
+    case_purine_shoulder()
     #case_paired_shoulder()
-    case_paired_shoulder_plot_helper()
+    #case_paired_shoulder_plot_helper()
     #case_AT_get()
 
